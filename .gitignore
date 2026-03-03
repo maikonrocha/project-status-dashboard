@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+dist/
+build/
+.next/
+out/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Database
+*.db
+*.sqlite
+
+# Temporary files
+*.tmp
+tmp/
+temp/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Python (for analysis scripts)
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Excel analysis output
+excel_analysis_output.txt
+excel_analyzer.py
+full_excel_analysis.py

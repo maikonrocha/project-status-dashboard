@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Project {
+  id                     String   @id @default(uuid())
+  epicId                 String   @unique
+  name                   String
+  squadName              String
+  teamSize               Int
+  beginDate              DateTime
+  jiraBacklogFilterId    String   // Filter for project backlog (remaining tasks / scope)
+  jiraThroughputFilterId String   // Filter for team throughput history
+  statusConfig           Json     @default("{\"concluded\":[\"Concluído\",\"Concluded\",\"Done\",\"Pendente de publicação\",\"Pendente publicação\",\"Pending Publication\",\"Pending Publication PRD\"],\"inProgress\":[\"Em Andamento\",\"In Progress\",\"Pendente teste\",\"Pending Test\",\"TEST PENDING\",\"Em Teste\",\"TEST\",\"Acompanhamento\",\"Liberado para Homologação\",\"AGUARDANDO CODEREVIEW\",\"Aguardando MR\"]}")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  snapshots Snapshot[]
+
+  @@map("projects")
+}
+
+model Snapshot {
+  id             String     @id @default(uuid())
+  projectId      String
+  snapshotDate   DateTime   @default(now())
+  source         SourceType
+  sourceMetadata Json
+  createdAt      DateTime   @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("snapshots")
+}
+
+enum SourceType {
+  EXCEL
+  JIRA_API
+}
