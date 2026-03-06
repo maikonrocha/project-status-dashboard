@@ -1,29 +1,14 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { projectsApi, type Project } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
 
-export default function HomePage() {
-  const router = useRouter();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    projectsApi.getAll()
-      .then((res) => setProjects(res.data))
-      .catch((err) => console.error('Failed to load projects:', err))
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="animate-pulse text-blue-300/60">Loading projects...</div>
-      </div>
-    );
+export default async function HomePage() {
+  let projects: Project[] = [];
+  try {
+    const res = await projectsApi.getAll();
+    projects = res.data;
+  } catch (err) {
+    console.error('Failed to load projects:', err);
   }
 
   return (
@@ -61,14 +46,14 @@ export default function HomePage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {projects.map((project) => (
-            <button
+            <Link
+              href={`/projects/${project.id}/status`}
               key={project.id}
               id={`select-project-${project.id}`}
-              onClick={() => router.push(`/projects/${project.id}/status`)}
               className="group text-left p-6 rounded-xl border border-white/10 bg-white/5
                                        hover:bg-white/10 hover:border-blue-400/30
                                        transition-all duration-200 ease-out
-                                       focus:outline-none focus:ring-2 focus:ring-blue-400/50"
+                                       focus:outline-none focus:ring-2 focus:ring-blue-400/50 block"
             >
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-indigo-500/20
@@ -93,7 +78,7 @@ export default function HomePage() {
               <div className="mt-1.5 text-xs text-blue-300/30">
                 Started: {formatDate(project.beginDate)}
               </div>
-            </button>
+            </Link>
           ))}
         </div>
       )}
