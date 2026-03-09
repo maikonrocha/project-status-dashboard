@@ -52,8 +52,15 @@ export class MetricsService {
         backlogIssues: JiraIssueData[],
         beginDate: Date,
     ): WeeklyMetricRow[] {
+        // No Jira data at all — return empty array
+        if (backlogIssues.length === 0 && throughputIssues.length === 0) {
+            return [];
+        }
+
         const today = new Date();
-        const weeks = this.getWeekBoundaries(beginDate, today);
+        // If beginDate is in the future use today so we always generate at least one week
+        const effectiveStart = beginDate > today ? today : beginDate;
+        const weeks = this.getWeekBoundaries(effectiveStart, today);
         const rows: WeeklyMetricRow[] = [];
 
         for (const weekStart of weeks) {

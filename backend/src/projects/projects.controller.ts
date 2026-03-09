@@ -6,41 +6,48 @@ import {
     Delete,
     Body,
     Param,
+    Request,
 } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { ProjectsService } from './projects.service';
 import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
+import { Roles } from '../auth/roles.decorator';
 
+@ApiBearerAuth()
 @Controller('projects')
 export class ProjectsController {
     constructor(private readonly projectsService: ProjectsService) { }
 
     @Post()
-    create(@Body() createProjectDto: CreateProjectDto) {
-        return this.projectsService.create(createProjectDto);
+    @Roles('OWNER')
+    create(@Request() req: any, @Body() createProjectDto: CreateProjectDto) {
+        return this.projectsService.create(createProjectDto, req.user.companyId);
     }
 
     @Get()
-    findAll() {
-        return this.projectsService.findAll();
+    findAll(@Request() req: any) {
+        return this.projectsService.findAll(req.user.companyId);
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.projectsService.findOne(id);
+    findOne(@Request() req: any, @Param('id') id: string) {
+        return this.projectsService.findOne(id, req.user.companyId);
     }
 
     @Put(':id')
-    update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
-        return this.projectsService.update(id, updateProjectDto);
+    @Roles('OWNER')
+    update(@Request() req: any, @Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
+        return this.projectsService.update(id, updateProjectDto, req.user.companyId);
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.projectsService.remove(id);
+    @Roles('OWNER')
+    remove(@Request() req: any, @Param('id') id: string) {
+        return this.projectsService.remove(id, req.user.companyId);
     }
 
     @Get(':id/status')
-    getStatus(@Param('id') id: string) {
-        return this.projectsService.getStatus(id);
+    getStatus(@Request() req: any, @Param('id') id: string) {
+        return this.projectsService.getStatus(id, req.user.companyId);
     }
 }

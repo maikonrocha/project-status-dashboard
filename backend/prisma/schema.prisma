@@ -6,6 +6,56 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  OWNER
+  USER
+}
+
+enum SourceType {
+  EXCEL
+  JIRA_API
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  projects Project[]
+
+  @@map("companies")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String?
+  passwordHash String?
+  role         Role     @default(USER)
+  isVerified   Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  companyId    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("users")
+}
+
+model VerificationCode {
+  id        String   @id @default(uuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("verification_codes")
+}
+
 model Project {
   id                     String   @id @default(uuid())
   epicId                 String   @unique
@@ -13,12 +63,14 @@ model Project {
   squadName              String
   teamSize               Int
   beginDate              DateTime
-  jiraBacklogFilterId    String   // Filter for project backlog (remaining tasks / scope)
-  jiraThroughputFilterId String   // Filter for team throughput history
+  jiraBacklogFilterId    String
+  jiraThroughputFilterId String
   statusConfig           Json     @default("{\"concluded\":[\"Concluído\",\"Concluded\",\"Done\",\"Pendente de publicação\",\"Pendente publicação\",\"Pending Publication\",\"Pending Publication PRD\"],\"inProgress\":[\"Em Andamento\",\"In Progress\",\"Pendente teste\",\"Pending Test\",\"TEST PENDING\",\"Em Teste\",\"TEST\",\"Acompanhamento\",\"Liberado para Homologação\",\"AGUARDANDO CODEREVIEW\",\"Aguardando MR\"]}")
+  companyId              String
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
+  company   Company    @relation(fields: [companyId], references: [id])
   snapshots Snapshot[]
 
   @@map("projects")
@@ -35,9 +87,4 @@ model Snapshot {
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@map("snapshots")
-}
-
-enum SourceType {
-  EXCEL
-  JIRA_API
 }

@@ -72,7 +72,7 @@ export default function StatusDashboardClient({ projectId, data, projects }: Pro
             {
                 name: 'Actual Burndown',
                 type: 'line',
-                data: data.chartData.burndown.map((d) => [d.week, d.remaining]),
+                data: (data.chartData?.burndown || []).map((d) => [d.week, d.remaining]),
                 itemStyle: { color: '#3b82f6' },
                 lineStyle: { width: 3 },
                 areaStyle: {
@@ -90,7 +90,7 @@ export default function StatusDashboardClient({ projectId, data, projects }: Pro
             {
                 name: 'Baseline (P95)',
                 type: 'line',
-                data: data.chartData.baseline.map((d) => [d.week, d.value]),
+                data: (data.chartData?.baseline || []).map((d) => [d.week, d.value]),
                 itemStyle: { color: '#ec4899' },
                 lineStyle: { width: 2, type: 'dashed' },
             },
@@ -132,7 +132,7 @@ export default function StatusDashboardClient({ projectId, data, projects }: Pro
         series: [
             {
                 type: 'bar',
-                data: data.tables.weeklyThroughput.map((w) => [w.weekEnding, w.throughput]),
+                data: (data.tables?.weeklyThroughput || []).map((w) => [w.weekEnding, w.throughput]),
                 itemStyle: {
                     color: {
                         type: 'linear',
@@ -229,10 +229,32 @@ export default function StatusDashboardClient({ projectId, data, projects }: Pro
                 {/* Charts Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div className="lg:col-span-2 rounded-xl border border-white/10 bg-white/5 p-5">
-                        <ReactECharts option={chartOption} style={{ height: '400px' }} />
+                        {data.chartData?.burndown?.length > 0 ? (
+                            <ReactECharts option={chartOption} style={{ height: '400px' }} />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-[400px] text-blue-300/40 gap-2">
+                                <svg className="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                                        d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                                </svg>
+                                <p className="text-sm">No burndown data available</p>
+                                <p className="text-xs opacity-60">Check that the Jira backlog filter is configured correctly</p>
+                            </div>
+                        )}
                     </div>
                     <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                        <ReactECharts option={throughputChartOption} style={{ height: '400px' }} />
+                        {data.tables?.weeklyThroughput?.length > 0 ? (
+                            <ReactECharts option={throughputChartOption} style={{ height: '400px' }} />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-[400px] text-blue-300/40 gap-2">
+                                <svg className="w-10 h-10 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                                        d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                                </svg>
+                                <p className="text-sm">No throughput data available</p>
+                                <p className="text-xs opacity-60">Check that the Jira throughput filter is configured correctly</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -251,7 +273,7 @@ export default function StatusDashboardClient({ projectId, data, projects }: Pro
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {data.tables.remainingTasks.map((task) => (
+                                    {(data.tables?.remainingTasks || []).map((task) => (
                                         <tr key={task.key} className="border-b border-white/5 hover:bg-white/5">
                                             <td className="p-2 font-mono text-xs text-blue-300">{task.key}</td>
                                             <td className="p-2 text-xs text-slate-300">{task.summary}</td>
@@ -262,7 +284,7 @@ export default function StatusDashboardClient({ projectId, data, projects }: Pro
                                             </td>
                                         </tr>
                                     ))}
-                                    {data.tables.remainingTasks.length === 0 && (
+                                    {(!data.tables?.remainingTasks || data.tables.remainingTasks.length === 0) && (
                                         <tr>
                                             <td colSpan={3} className="p-4 text-center text-blue-300/40 text-xs">
                                                 No remaining tasks
@@ -288,7 +310,7 @@ export default function StatusDashboardClient({ projectId, data, projects }: Pro
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {data.tables.weeklyThroughput
+                                    {(data.tables?.weeklyThroughput || [])
                                         .slice()
                                         .reverse()
                                         .map((week, idx) => (
@@ -299,7 +321,7 @@ export default function StatusDashboardClient({ projectId, data, projects }: Pro
                                                 <td className="p-2 text-right text-slate-400">{week.remaining}</td>
                                             </tr>
                                         ))}
-                                    {data.tables.weeklyThroughput.length === 0 && (
+                                    {(!data.tables?.weeklyThroughput || data.tables.weeklyThroughput.length === 0) && (
                                         <tr>
                                             <td colSpan={4} className="p-4 text-center text-blue-300/40 text-xs">
                                                 No throughput data yet

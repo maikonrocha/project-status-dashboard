@@ -38,6 +38,7 @@ export class JiraClientService {
         this.client = axios.create({
             baseURL: site,
             auth: { username: email, password: token },
+            timeout: 15_000,
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
@@ -79,6 +80,14 @@ export class JiraClientService {
 
             const { data } = await this.client.post('/rest/api/3/search/jql', payload);
 
+            // Detect Jira error responses that may return 200 but contain error messages
+            if (data.errorMessages?.length) {
+                this.logger.error(
+                    `Jira returned errors for filter ${filterId}: ${data.errorMessages.join(', ')}`,
+                );
+                throw new Error(`Jira error for filter ${filterId}: ${data.errorMessages.join(', ')}`);
+            }
+
             const issues: any[] = data.issues || [];
             for (const issue of issues) {
                 allIssues.push(this.mapIssue(issue));
@@ -93,8 +102,7 @@ export class JiraClientService {
 
         } while (nextPageToken);
 
-        this.logger.log(`>>>>>> Fetched ${allIssues.length} total issues for filter ${filterId}`);
-        this.logger.log(`>>>>>> Issues list: ${JSON.stringify(allIssues, null, 2)}`);
+        this.logger.log(`Fetched ${allIssues.length} total issues for filter ${filterId}`);
         return allIssues;
     }
 

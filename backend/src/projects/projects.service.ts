@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadGatewayException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto, UpdateProjectDto } from './dto/project.dto';
 import { StatusDashboardDto } from './dto/status.dto';
@@ -9,6 +9,8 @@ import { JiraClientService } from '../jira/jira-client.service';
 
 @Injectable()
 export class ProjectsService {
+    private readonly logger = new Logger(ProjectsService.name);
+
     constructor(
         private prisma: PrismaService,
         private metricsService: MetricsService,
@@ -20,10 +22,11 @@ export class ProjectsService {
     /**
      * Create a new project
      */
-    async create(createProjectDto: CreateProjectDto) {
+    async create(createProjectDto: CreateProjectDto, companyId: string) {
         return this.prisma.project.create({
             data: {
                 ...createProjectDto,
+                companyId,
                 statusConfig: createProjectDto.statusConfig || {
                     concluded: [
                         'Concluído',
@@ -52,30 +55,34 @@ export class ProjectsService {
         });
     }
 
-    async findAll() {
+    async findAll(companyId: string) {
         return this.prisma.project.findMany({
+            where: { companyId },
             orderBy: { createdAt: 'desc' },
         });
     }
 
-    async findOne(id: string) {
+    async findOne(id: string, companyId?: string) {
         const project = await this.prisma.project.findUnique({
             where: { id },
         });
         if (!project) throw new NotFoundException(`Project ${id} not found`);
+        if (companyId && project.companyId !== companyId) {
+            throw new NotFoundException(`Project ${id} not found`);
+        }
         return project;
     }
 
-    async update(id: string, updateProjectDto: UpdateProjectDto) {
-        await this.findOne(id);
+    async update(id: string, updateProjectDto: UpdateProjectDto, companyId: string) {
+        await this.findOne(id, companyId);
         return this.prisma.project.update({
             where: { id },
             data: updateProjectDto,
         });
     }
 
-    async remove(id: string) {
-        await this.findOne(id);
+    async remove(id: string, companyId: string) {
+        await this.findOne(id, companyId);
         return this.prisma.project.delete({ where: { id } });
     }
 
@@ -83,18 +90,25 @@ export class ProjectsService {
      * Get status dashboard data for a project.
      * All data is fetched live from Jira and computed in-memory on every call.
      */
-    async getStatus(projectId: string): Promise<StatusDashboardDto> {
-        const project = await this.findOne(projectId);
+    async getStatus(projectId: string, companyId?: string): Promise<StatusDashboardDto> {
+        const project = await this.findOne(projectId, companyId);
 
-        // 1. Fetch live issues from Jira (backlog = remaining scope)
-        const backlogIssues = await this.jiraClient.fetchIssuesByFilter(
-            project.jiraBacklogFilterId,
-        );
-
-        // 2. Fetch throughput history issues (completed issues for metrics)
-        const throughputIssues = await this.jiraClient.fetchIssuesByFilter(
-            project.jiraThroughputFilterId,
-        );
+        // 1. Fetch live issues from Jira
+        let backlogIssues;
+        let throughputIssues;
+        try {
+            backlogIssues = await this.jiraClient.fetchIssuesByFilter(
+                project.jiraBacklogFilterId,
+            );
+            throughputIssues = await this.jiraClient.fetchIssuesByFilter(
+                project.jiraThroughputFilterId,
+            );
+        } catch (error) {
+            this.logger.error(`Failed to fetch Jira data for project ${project.name}: ${error.message}`);
+            throw new BadGatewayException(
+                `Failed to fetch data from Jira: ${error.message}`,
+            );
+        }
 
         // 3. Compute weekly metrics in-memory from throughput history and backlog snapshot
         const metrics = this.metricsService.computeWeeklyMetricsFromIssues(

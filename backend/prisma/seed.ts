@@ -1,12 +1,7 @@
 /**
- * Seed script — creates project records in the database.
- * All Jira data (issues, metrics, simulation) is fetched live from the API
- * on every dashboard access, so only the Project config is seeded here.
+ * Seed script — creates a default owner, company, and project records.
  *
  * Run:  npx ts-node prisma/seed.ts
- *
- * Required env vars (read from .env in repo root automatically via dotenv):
- *   DATABASE_URL
  */
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -14,9 +9,21 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
+import * as bcrypt from 'bcrypt';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { PrismaClient } = require('@prisma/client');
+
+// ── Default company + owner ─────────────────────────────────────────────────
+const DEFAULT_OWNER = {
+    email: 'admin@dashboard.dev',
+    name: 'Admin',
+    password: 'admin123',
+};
+
+const DEFAULT_COMPANY = {
+    name: 'Demo Company',
+};
 
 // ── Project configs ──────────────────────────────────────────────────────────
 const PROJECTS = [
@@ -54,8 +61,45 @@ async function main() {
     const adapter = new PrismaPg(pool);
     const prisma = new PrismaClient({ adapter });
 
-    console.log('🌱 Seeding projects…');
+    console.log('🌱 Seeding database…');
 
+    // 1. Create or find company
+    let company = await prisma.company.findFirst({
+        where: { name: DEFAULT_COMPANY.name },
+    });
+
+    if (!company) {
+        company = await prisma.company.create({
+            data: { name: DEFAULT_COMPANY.name },
+        });
+        console.log(`   ✓ Company created: ${company.name} (${company.id})`);
+    } else {
+        console.log(`   ✓ Company exists: ${company.name} (${company.id})`);
+    }
+
+    // 2. Create or find owner user
+    let owner = await prisma.user.findUnique({
+        where: { email: DEFAULT_OWNER.email },
+    });
+
+    if (!owner) {
+        const passwordHash = await bcrypt.hash(DEFAULT_OWNER.password, 12);
+        owner = await prisma.user.create({
+            data: {
+                email: DEFAULT_OWNER.email,
+                name: DEFAULT_OWNER.name,
+                passwordHash,
+                role: 'OWNER',
+                isVerified: true,
+                companyId: company.id,
+            },
+        });
+        console.log(`   ✓ Owner created: ${owner.email} (password: ${DEFAULT_OWNER.password})`);
+    } else {
+        console.log(`   ✓ Owner exists: ${owner.email}`);
+    }
+
+    // 3. Seed projects
     for (const config of PROJECTS) {
         const project = await prisma.project.upsert({
             where: { epicId: config.epicId },
@@ -67,6 +111,7 @@ async function main() {
                 jiraBacklogFilterId: config.jiraBacklogFilterId,
                 jiraThroughputFilterId: config.jiraThroughputFilterId,
                 statusConfig: config.statusConfig,
+                companyId: company.id,
             },
             create: {
                 epicId: config.epicId,
@@ -77,12 +122,15 @@ async function main() {
                 jiraBacklogFilterId: config.jiraBacklogFilterId,
                 jiraThroughputFilterId: config.jiraThroughputFilterId,
                 statusConfig: config.statusConfig,
+                companyId: company.id,
             },
         });
-        console.log(`   ✓ ${project.name} (${project.id})`);
+        console.log(`   ✓ Project: ${project.name} (${project.id})`);
     }
 
-    console.log('✅ Seed complete! Jira data will be fetched live on dashboard access.');
+    console.log('');
+    console.log('✅ Seed complete!');
+    console.log(`   Login: ${DEFAULT_OWNER.email} / ${DEFAULT_OWNER.password}`);
     await prisma.$disconnect();
     await pool.end();
 }

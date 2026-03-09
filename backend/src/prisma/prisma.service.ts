@@ -12,12 +12,12 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     private client: InstanceType<typeof PrismaClient>;
 
     // Expose all prisma model accessors at the top level so existing code
-    // (this.prisma.project, this.prisma.weeklyMetric, etc.) keeps working.
+    // (this.prisma.project, this.prisma.user, etc.) keeps working.
     public project: InstanceType<typeof PrismaClient>['project'];
-    public jiraIssue: InstanceType<typeof PrismaClient>['jiraIssue'];
     public snapshot: InstanceType<typeof PrismaClient>['snapshot'];
-    public weeklyMetric: InstanceType<typeof PrismaClient>['weeklyMetric'];
-    public simulationRun: InstanceType<typeof PrismaClient>['simulationRun'];
+    public company: InstanceType<typeof PrismaClient>['company'];
+    public user: InstanceType<typeof PrismaClient>['user'];
+    public verificationCode: InstanceType<typeof PrismaClient>['verificationCode'];
 
     constructor(configService: ConfigService) {
         const connectionString = configService.get<string>('DATABASE_URL');
@@ -27,10 +27,10 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
 
         // Bind model accessors so services can use this.prisma.project etc.
         this.project = this.client.project;
-        this.jiraIssue = this.client.jiraIssue;
         this.snapshot = this.client.snapshot;
-        this.weeklyMetric = this.client.weeklyMetric;
-        this.simulationRun = this.client.simulationRun;
+        this.company = this.client.company;
+        this.user = this.client.user;
+        this.verificationCode = this.client.verificationCode;
     }
 
     async onModuleInit() {

@@ -4,8 +4,39 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005/api';
 
 export const api = axios.create({
     baseURL: API_URL,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+        'Content-Type': 'application/json',
+    },
 });
+
+// Interceptor: attach JWT token from localStorage (client-side only)
+if (typeof window !== 'undefined') {
+    api.interceptors.request.use((config) => {
+        const token = localStorage.getItem('auth_token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    });
+
+    api.interceptors.response.use(
+        (response) => response,
+        (error) => {
+            if (error.response?.status === 401) {
+                const isAuthRoute = window.location.pathname.startsWith('/sign-');
+                const isVerifyRoute = window.location.pathname.startsWith('/verify');
+                if (!isAuthRoute && !isVerifyRoute) {
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('auth_user');
+                    window.location.href = '/sign-in';
+                }
+            }
+            return Promise.reject(error);
+        },
+    );
+}
+
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 export interface Project {
     id: string;
@@ -17,6 +48,7 @@ export interface Project {
     jiraBacklogFilterId: string;
     jiraThroughputFilterId: string;
     statusConfig: any;
+    companyId: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -65,6 +97,55 @@ export interface StatusDashboard {
         }>;
     };
 }
+
+export interface AuthUser {
+    id: string;
+    email: string;
+    name: string;
+    role: 'OWNER' | 'USER';
+    companyId: string;
+    companyName: string;
+}
+
+export interface TeamMember {
+    id: string;
+    email: string;
+    name: string | null;
+    role: string;
+    isVerified: boolean;
+    isActive: boolean;
+    createdAt: string;
+}
+
+// ─── Auth API ───────────────────────────────────────────────────────────────
+
+export const authApi = {
+    signUp: (data: { name: string; email: string; password: string; companyName: string }) =>
+        api.post('/auth/sign-up', data),
+
+    completeSignUp: (data: { email: string; name: string; password: string }) =>
+        api.post('/auth/sign-up/complete', data),
+
+    signIn: (data: { email: string; password: string }) =>
+        api.post('/auth/sign-in', data),
+
+    verify: (data: { email: string; code: string }) =>
+        api.post('/auth/verify', data),
+
+    resendCode: (data: { email: string }) =>
+        api.post('/auth/resend-code', data),
+
+    invite: (data: { email: string }) =>
+        api.post('/auth/invite', data),
+
+    getMe: () =>
+        api.get<AuthUser>('/auth/me'),
+
+    getUsers: () =>
+        api.get<TeamMember[]>('/auth/users'),
+};
+
+// ─── Projects API ───────────────────────────────────────────────────────────
 
 export const projectsApi = {
     getAll: () => api.get<Project[]>('/projects'),
