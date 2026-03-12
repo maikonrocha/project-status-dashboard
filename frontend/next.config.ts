@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [],
   experimental: {
     serverActions: {
-      allowedOrigins: ["note-maikon.posthaus.com.br", "note-maikon.local", "localhost:3002"],
+      allowedOrigins: ["localhost:3002", "ti-maikonr.posthaus.com.br:3002"],
     },
   },
 };

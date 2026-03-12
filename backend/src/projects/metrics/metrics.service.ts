@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JiraIssueData } from '../../jira/jira-client.service';
 import {
     addWeeks,
-    nextMonday,
-    isMonday,
+    startOfWeek,
     isBefore,
 } from 'date-fns';
 
@@ -20,20 +19,19 @@ export interface WeeklyMetricRow {
 export class MetricsService {
 
     /**
-     * Get the next Monday on or after a given date.
+     * Get the start of the week (Saturday) for a given date.
      */
-    private toMonday(date: Date): Date {
-        if (isMonday(date)) return date;
-        return nextMonday(date);
+    private toSaturday(date: Date): Date {
+        return startOfWeek(date, { weekStartsOn: 6 });
     }
 
     /**
-     * Get all week-start Mondays from beginDate to endDate.
+     * Get all week-start Saturdays from beginDate to endDate.
      */
     getWeekBoundaries(beginDate: Date, endDate: Date): Date[] {
-        const firstMonday = this.toMonday(beginDate);
+        const firstSaturday = this.toSaturday(beginDate);
         const weeks: Date[] = [];
-        let current = new Date(firstMonday);
+        let current = new Date(firstSaturday);
 
         while (isBefore(current, endDate) || current.getTime() === endDate.getTime()) {
             weeks.push(new Date(current));
@@ -58,8 +56,17 @@ export class MetricsService {
         }
 
         const today = new Date();
-        // If beginDate is in the future use today so we always generate at least one week
-        const effectiveStart = beginDate > today ? today : beginDate;
+
+        // 1. Find earliest throughput resolution date
+        let earliestDate = beginDate;
+        for (const issue of throughputIssues) {
+            if (issue.resolutionDate && isBefore(issue.resolutionDate, earliestDate)) {
+                earliestDate = issue.resolutionDate;
+            }
+        }
+
+        // 2. If effectiveStart is in the future use today so we always generate at least one week
+        const effectiveStart = earliestDate > today ? today : earliestDate;
         const weeks = this.getWeekBoundaries(effectiveStart, today);
         const rows: WeeklyMetricRow[] = [];
 

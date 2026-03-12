@@ -154,10 +154,26 @@ export class ProjectsService {
         const currentWeekThroughput = this.metricsService.getCurrentWeekThroughput(metrics);
 
         // 9. Build chart data
-        const burndown = metrics.map((m) => ({
-            week: m.weekStart,
-            remaining: m.remainingCount,
-        }));
+        const burndown: { week: Date; remaining: number }[] = [];
+
+        // Add absolute begin point
+        const initialCompleted = backlogIssues.filter(
+            (i) => i.resolutionDate && i.resolutionDate < project.beginDate
+        ).length;
+        burndown.push({
+            week: project.beginDate,
+            remaining: Math.max(0, backlogIssues.length - initialCompleted)
+        });
+
+        // Add regular metrics points after the begin date
+        for (const m of metrics) {
+            if (m.weekStart.getTime() > project.beginDate.getTime()) {
+                burndown.push({
+                    week: m.weekStart,
+                    remaining: m.remainingCount,
+                });
+            }
+        }
 
         const baseline = baselineSeries.map((b) => ({
             week: b.week,
@@ -194,12 +210,16 @@ export class ProjectsService {
             }))
             .slice(0, 20);
 
-        const weeklyThroughput = metrics.map((m) => ({
-            weekEnding: m.weekStart,
-            throughput: m.weeklyThroughput,
-            cumulative: m.completedCount,
-            remaining: m.remainingCount,
-        }));
+        const weeklyThroughput = metrics.map((m) => {
+            const friday = new Date(m.weekStart);
+            friday.setDate(friday.getDate() + 6); // End of week (Friday)
+            return {
+                weekEnding: friday,
+                throughput: m.weeklyThroughput,
+                cumulative: m.completedCount,
+                remaining: m.remainingCount,
+            };
+        });
 
         return {
             project: {

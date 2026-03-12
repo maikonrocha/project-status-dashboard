@@ -25,7 +25,7 @@ export default function StatusDashboardClient({ projectId, data, projects }: Pro
         const nextFri = new Date(p95Date);
         nextFri.setDate(p95Date.getDate() + daysUntilFriday);
         nextFri.setHours(23, 59, 59, 999);
-        chartMax = nextFri.getTime();
+        chartMax = Math.max(nextFri.getTime(), Date.now());
     }
 
     // ECharts burndown configuration (dark theme)

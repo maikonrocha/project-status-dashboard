@@ -179,7 +179,7 @@ export default function TeamPage() {
                                 </td>
                                 <td className="px-5 py-4 text-blue-300/40 text-xs hidden lg:table-cell">
                                     {new Date(member.createdAt).toLocaleDateString('en-US', {
-                                        year: 'numeric', month: 'short', day: 'numeric'
+                                        year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC'
                                     })}
                                 </td>
                             </tr>
