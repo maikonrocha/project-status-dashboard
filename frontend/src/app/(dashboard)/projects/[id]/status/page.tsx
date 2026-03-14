@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { projectsApi, type Project, type StatusDashboard } from '@/lib/api-client';
-import StatusDashboardClient from './StatusDashboardClient';
+import { StatusDashboardClient } from './StatusDashboardClient';
 
 export default function StatusPage() {
     const params = useParams();

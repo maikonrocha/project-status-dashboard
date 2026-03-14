@@ -11,7 +11,7 @@ interface Props {
     projects: Project[];
 }
 
-export default function StatusDashboardClient({ projectId, data, projects }: Props) {
+export function StatusDashboardClient({ projectId, data, projects }: Props) {
     const router = useRouter();
 
     // Calculate the chart X-axis boundaries

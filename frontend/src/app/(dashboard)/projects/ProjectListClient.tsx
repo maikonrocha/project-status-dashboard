@@ -10,7 +10,7 @@ interface Props {
     initialProjects: Project[];
 }
 
-export default function ProjectListClient({ initialProjects }: Props) {
+export function ProjectListClient({ initialProjects }: Props) {
     const router = useRouter();
     const [projects, setProjects] = useState<Project[]>(initialProjects);
     const [deletingId, setDeletingId] = useState<string | null>(null);

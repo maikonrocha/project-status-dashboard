@@ -24,7 +24,7 @@ const defaultStatusConfig = {
     ],
 };
 
-export default function ProjectForm({ initial = {}, onSubmit, submitLabel }: ProjectFormProps) {
+export function ProjectForm({ initial = {}, onSubmit, submitLabel }: ProjectFormProps) {
     const router = useRouter();
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);

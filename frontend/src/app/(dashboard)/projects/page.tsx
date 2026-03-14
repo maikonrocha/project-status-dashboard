@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { projectsApi, type Project } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
 import { formatDate } from '@/lib/utils';
-import ProjectListClient from './ProjectListClient';
+import { ProjectListClient } from './ProjectListClient';
 
 export default function ProjectsPage() {
     const { isOwner, isAuthenticated } = useAuth();

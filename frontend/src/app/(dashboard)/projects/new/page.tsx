@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { projectsApi } from '@/lib/api-client';
-import ProjectForm from '@/app/components/ProjectForm';
+import { ProjectForm } from '@/app/components/ProjectForm';
 
 export default function NewProjectPage() {
     const router = useRouter();

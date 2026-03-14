@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 
-export default function Navbar() {
+export function Navbar() {
     const pathname = usePathname();
     const { user, isOwner, logout } = useAuth();
 
