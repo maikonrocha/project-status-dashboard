@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { authApi } from '@/lib/api-client';
+import { signUpAction } from './actions';
 
 export default function SignUpPage() {
     const router = useRouter();
@@ -20,10 +20,12 @@ export default function SignUpPage() {
         setLoading(true);
 
         try {
-            await authApi.signUp({ name, email, password, companyName });
+            const result = await signUpAction({ name, email, password, companyName });
+            if ('error' in result) {
+                setError(result.error);
+                return;
+            }
             router.push(`/verify?email=${encodeURIComponent(email)}`);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Sign up failed. Please try again.');
         } finally {
             setLoading(false);
         }

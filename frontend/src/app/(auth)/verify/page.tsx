@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { authApi } from '@/lib/api-client';
-import { Suspense } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { verifyAction, resendCodeAction } from './actions';
 
 function VerifyForm() {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const email = searchParams.get('email') || '';
 
@@ -39,12 +39,10 @@ function VerifyForm() {
         newCode[index] = value.slice(-1);
         setCode(newCode);
 
-        // Auto-focus next input
         if (value && index < 5) {
             inputRefs.current[index + 1]?.focus();
         }
 
-        // Auto-submit when all 6 digits filled
         const fullCode = newCode.join('');
         if (fullCode.length === 6) {
             handleVerify(fullCode);
@@ -78,20 +76,15 @@ function VerifyForm() {
         setLoading(true);
 
         try {
-            const res = await authApi.verify({ email, code: fullCode });
-            const data = res.data;
-
-            localStorage.setItem('auth_token', data.accessToken);
-            localStorage.setItem('auth_user', JSON.stringify(data.user));
+            const result = await verifyAction({ email, code: fullCode });
+            if ('error' in result) {
+                setError(result.error);
+                setCode(['', '', '', '', '', '']);
+                inputRefs.current[0]?.focus();
+                return;
+            }
             setSuccess('Email verified! Redirecting…');
-
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 1000);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Invalid or expired code.');
-            setCode(['', '', '', '', '', '']);
-            inputRefs.current[0]?.focus();
+            setTimeout(() => router.push('/'), 1000);
         } finally {
             setLoading(false);
         }
@@ -101,12 +94,14 @@ function VerifyForm() {
         setError('');
         setResendLoading(true);
         try {
-            await authApi.resendCode({ email });
+            const result = await resendCodeAction({ email });
+            if ('error' in result) {
+                setError(result.error);
+                return;
+            }
             setCountdown(600);
             setSuccess('A new code has been sent.');
             setTimeout(() => setSuccess(''), 3000);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to resend code.');
         } finally {
             setResendLoading(false);
         }

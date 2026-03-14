@@ -1,42 +1,18 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { projectsApi, type Project, type StatusDashboard } from '@/lib/api-client';
+import { serverApi } from '@/lib/server-api';
 import { StatusDashboardClient } from './StatusDashboardClient';
 
-export default function StatusPage() {
-    const params = useParams();
-    const projectId = params.id as string;
+export default async function StatusPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id: projectId } = await params;
 
-    const [data, setData] = useState<StatusDashboard | null>(null);
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+    try {
+        const [data, projects] = await Promise.all([
+            serverApi.getStatus(projectId),
+            serverApi.getProjects(),
+        ]);
 
-    useEffect(() => {
-        Promise.all([
-            projectsApi.getStatus(projectId),
-            projectsApi.getAll(),
-        ])
-            .then(([statusRes, projectsRes]) => {
-                setData(statusRes.data);
-                setProjects(projectsRes.data);
-            })
-            .catch(() => setError(true))
-            .finally(() => setLoading(false));
-    }, [projectId]);
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center py-24">
-                <div className="animate-spin h-8 w-8 border-2 border-blue-400 border-t-transparent rounded-full" />
-            </div>
-        );
-    }
-
-    if (error || !data) {
+        return <StatusDashboardClient projectId={projectId} data={data} projects={projects} />;
+    } catch {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
                 <div className="text-center">
@@ -51,6 +27,4 @@ export default function StatusPage() {
             </div>
         );
     }
-
-    return <StatusDashboardClient projectId={projectId} data={data} projects={projects} />;
 }

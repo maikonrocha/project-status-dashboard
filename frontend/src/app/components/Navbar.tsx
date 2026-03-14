@@ -1,16 +1,23 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { logoutAction } from '@/lib/actions/auth';
 
 export function Navbar() {
     const pathname = usePathname();
-    const { user, isOwner, logout } = useAuth();
+    const router = useRouter();
+    const { user, isOwner } = useAuth();
 
     function isActive(href: string) {
         if (href === '/') return pathname === '/';
         return pathname.startsWith(href);
+    }
+
+    async function handleLogout() {
+        await logoutAction();
+        router.push('/sign-in');
     }
 
     const navLinks = [
@@ -74,7 +81,7 @@ export function Navbar() {
                                 </p>
                             </div>
                             <button
-                                onClick={logout}
+                                onClick={handleLogout}
                                 id="logout-btn"
                                 title="Sign out"
                                 className="p-1.5 rounded-lg text-blue-300/50 hover:text-red-400 hover:bg-red-500/10 transition-all"

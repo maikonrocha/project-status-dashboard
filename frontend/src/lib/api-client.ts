@@ -9,32 +9,6 @@ export const api = axios.create({
     },
 });
 
-// Interceptor: attach JWT token from localStorage (client-side only)
-if (typeof window !== 'undefined') {
-    api.interceptors.request.use((config) => {
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    });
-
-    api.interceptors.response.use(
-        (response) => response,
-        (error) => {
-            if (error.response?.status === 401) {
-                const isAuthRoute = window.location.pathname.startsWith('/sign-');
-                const isVerifyRoute = window.location.pathname.startsWith('/verify');
-                if (!isAuthRoute && !isVerifyRoute) {
-                    localStorage.removeItem('auth_token');
-                    localStorage.removeItem('auth_user');
-                    window.location.href = '/sign-in';
-                }
-            }
-            return Promise.reject(error);
-        },
-    );
-}
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

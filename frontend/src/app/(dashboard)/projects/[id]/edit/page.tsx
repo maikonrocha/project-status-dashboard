@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { projectsApi, type Project } from '@/lib/api-client';
+import { getProjectAction, updateProjectAction } from './actions';
 import { ProjectForm } from '@/app/components/ProjectForm';
+import type { Project } from '@/lib/api-client';
 
 export default function EditProjectPage() {
     const params = useParams();
@@ -14,14 +15,20 @@ export default function EditProjectPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        projectsApi.getOne(projectId)
-            .then((res) => setProject(res.data))
-            .catch(() => router.push('/projects'))
+        getProjectAction(projectId)
+            .then((result) => {
+                if ('error' in result) {
+                    router.push('/projects');
+                } else {
+                    setProject(result.project);
+                }
+            })
             .finally(() => setLoading(false));
-    }, [projectId]);
+    }, [projectId, router]);
 
     async function handleUpdate(data: Partial<Project>) {
-        await projectsApi.update(projectId, data);
+        const result = await updateProjectAction(projectId, data);
+        if (result?.error) throw new Error(result.error);
         router.push('/projects');
     }
 

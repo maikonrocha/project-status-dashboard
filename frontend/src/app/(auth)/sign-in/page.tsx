@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { authApi } from '@/lib/api-client';
+import { signInAction } from './actions';
 
 export default function SignInPage() {
     const router = useRouter();
@@ -18,19 +18,19 @@ export default function SignInPage() {
         setLoading(true);
 
         try {
-            const res = await authApi.signIn({ email, password });
-            const data = res.data;
+            const result = await signInAction({ email, password });
 
-            if (data.requiresVerification) {
+            if ('error' in result) {
+                setError(result.error);
+                return;
+            }
+
+            if ('requiresVerification' in result) {
                 router.push(`/verify?email=${encodeURIComponent(email)}`);
                 return;
             }
 
-            localStorage.setItem('auth_token', data.accessToken);
-            localStorage.setItem('auth_user', JSON.stringify(data.user));
-            window.location.href = '/';
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Sign in failed. Please try again.');
+            router.push('/');
         } finally {
             setLoading(false);
         }

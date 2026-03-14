@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { projectsApi, type Project } from '@/lib/api-client';
+import { type Project } from '@/lib/api-client';
+import { deleteProjectAction } from './actions';
 import { formatDate } from '@/lib/utils';
 
 interface Props {
@@ -19,8 +20,10 @@ export function ProjectListClient({ initialProjects }: Props) {
     async function handleDelete(id: string) {
         setDeletingId(id);
         try {
-            await projectsApi.delete(id);
-            setProjects((prev) => prev.filter((p) => p.id !== id));
+            const result = await deleteProjectAction(id);
+            if ('success' in result) {
+                setProjects((prev) => prev.filter((p) => p.id !== id));
+            }
         } catch (e) {
             console.error('Failed to delete project:', e);
         } finally {

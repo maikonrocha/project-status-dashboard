@@ -1,34 +1,18 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { projectsApi, type Project } from '@/lib/api-client';
-import { useAuth } from '@/lib/auth-context';
-import { formatDate } from '@/lib/utils';
+import { cookies } from 'next/headers';
+import { serverApi } from '@/lib/server-api';
 import { ProjectListClient } from './ProjectListClient';
+import type { AuthUser } from '@/lib/auth-context';
 
-export default function ProjectsPage() {
-    const { isOwner, isAuthenticated } = useAuth();
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
+export default async function ProjectsPage() {
+    const [projects, cookieStore] = await Promise.all([
+        serverApi.getProjects(),
+        cookies(),
+    ]);
 
-    useEffect(() => {
-        if (!isAuthenticated) return;
-        projectsApi.getAll()
-            .then((res) => setProjects(res.data))
-            .catch((e) => console.error('Failed to load projects:', e))
-            .finally(() => setLoading(false));
-    }, [isAuthenticated]);
-
-    if (loading) {
-        return (
-            <main className="max-w-7xl mx-auto px-6 py-10">
-                <div className="flex items-center justify-center py-24">
-                    <div className="animate-spin h-8 w-8 border-2 border-blue-400 border-t-transparent rounded-full" />
-                </div>
-            </main>
-        );
-    }
+    const userCookie = cookieStore.get('auth_user')?.value;
+    const user: AuthUser | null = userCookie ? (JSON.parse(userCookie) as AuthUser) : null;
+    const isOwner = user?.role === 'OWNER';
 
     return (
         <main className="max-w-7xl mx-auto px-6 py-10">

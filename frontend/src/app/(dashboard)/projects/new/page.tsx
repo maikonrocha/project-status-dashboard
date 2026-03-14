@@ -1,14 +1,16 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { projectsApi } from '@/lib/api-client';
+import { createProjectAction } from './actions';
 import { ProjectForm } from '@/app/components/ProjectForm';
+import type { Project } from '@/lib/api-client';
 
 export default function NewProjectPage() {
     const router = useRouter();
 
-    async function handleCreate(data: Parameters<typeof projectsApi.create>[0]) {
-        await projectsApi.create(data);
+    async function handleCreate(data: Partial<Project>) {
+        const result = await createProjectAction(data);
+        if (result?.error) throw new Error(result.error);
         router.push('/projects');
     }
 

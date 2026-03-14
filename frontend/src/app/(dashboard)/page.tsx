@@ -1,36 +1,18 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { projectsApi, type Project } from '@/lib/api-client';
-import { useAuth } from '@/lib/auth-context';
+import { cookies } from 'next/headers';
+import { serverApi } from '@/lib/server-api';
+import { formatDate } from '@/lib/utils';
+import type { AuthUser } from '@/lib/auth-context';
 
-function formatDate(dateStr: string) {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC'
-    });
-}
+export default async function HomePage() {
+    const [projects, cookieStore] = await Promise.all([
+        serverApi.getProjects(),
+        cookies(),
+    ]);
 
-export default function HomePage() {
-    const { isLoading, isAuthenticated, isOwner } = useAuth();
-    const [projects, setProjects] = useState<Project[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        if (!isAuthenticated) return;
-        projectsApi.getAll()
-            .then(res => setProjects(res.data))
-            .catch(err => console.error('Failed to load projects:', err))
-            .finally(() => setLoading(false));
-    }, [isAuthenticated]);
-
-    if (isLoading || loading) {
-        return (
-            <main className="max-w-7xl mx-auto px-6 py-12 flex items-center justify-center min-h-[60vh]">
-                <div className="animate-spin h-8 w-8 border-2 border-blue-400 border-t-transparent rounded-full" />
-            </main>
-        );
-    }
+    const userCookie = cookieStore.get('auth_user')?.value;
+    const user: AuthUser | null = userCookie ? (JSON.parse(userCookie) as AuthUser) : null;
+    const isOwner = user?.role === 'OWNER';
 
     return (
         <main className="max-w-7xl mx-auto px-6 py-12">

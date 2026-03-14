@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { authApi } from '@/lib/api-client';
-import { Suspense } from 'react';
+import { completeSignUpAction } from './actions';
 
 function CompleteSignUpForm() {
     const router = useRouter();
@@ -28,10 +27,12 @@ function CompleteSignUpForm() {
         setLoading(true);
 
         try {
-            await authApi.completeSignUp({ email, name, password });
+            const result = await completeSignUpAction({ email, name, password });
+            if ('error' in result) {
+                setError(result.error);
+                return;
+            }
             router.push(`/verify?email=${encodeURIComponent(email)}`);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to complete sign up.');
         } finally {
             setLoading(false);
         }
