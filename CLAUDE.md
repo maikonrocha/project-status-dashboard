@@ -103,6 +103,10 @@ pnpm lint         # lint all packages
 # Backend only
 cd backend
 pnpm start:dev    # hot-reload watch mode
+pnpm test:cov     # run with Istanbul coverage report → backend/coverage/
+pnpm test:watch   # watch mode — re-runs on file save
+pnpm exec jest src/path/to/file.spec.ts                    # run a single spec file
+pnpm exec jest --testNamePattern="describe block name"     # filter by name
 pnpm test:e2e     # end-to-end tests
 npx prisma studio # database GUI
 npx prisma migrate dev --name <name>
@@ -111,6 +115,76 @@ npx prisma migrate dev --name <name>
 cd frontend
 pnpm dev          # Next.js dev server (port 3002)
 ```
+
+---
+
+## Testing
+
+**Coverage target:** >80% overall (currently ~88% lines, 86% branches).
+
+**Stack (no extra dependencies needed):**
+
+| Tool | Role |
+|---|---|
+| `jest` + `ts-jest` | Test runner & TS transpilation |
+| `@nestjs/testing` | `Test.createTestingModule()` for controller/service DI |
+
+**Spec file location:** `*.spec.ts` placed next to the source file it tests. See Scripts for run commands.
+
+**Mocking patterns:**
+
+- **Prisma** — create a plain object with `jest.fn()` per method; no library needed:
+  ```ts
+  const prisma = {
+    user: { findUnique: jest.fn(), create: jest.fn() },
+    company: { create: jest.fn() },
+  } as unknown as jest.Mocked<PrismaService>;
+  ```
+
+- **bcrypt** — native binding; `jest.spyOn` does NOT work. Use module-level mock:
+  ```ts
+  jest.mock('bcrypt', () => ({
+    hash: jest.fn().mockResolvedValue('$2b$12$mocked-hash'),
+    compare: jest.fn().mockResolvedValue(true),
+  }));
+  import * as bcrypt from 'bcrypt';
+  const mockedBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
+  ```
+
+- **Axios** — intercept `axios.create` so the service constructor receives a mock client:
+  ```ts
+  const mockPost = jest.fn();
+  jest.mock('axios', () => ({ create: jest.fn(() => ({ post: mockPost })) }));
+  ```
+
+- **Passport / passport-jwt** — mock at module level before importing `JwtStrategy`:
+  ```ts
+  jest.mock('passport-jwt', () => ({
+    ExtractJwt: { fromAuthHeaderAsBearerToken: jest.fn(() => () => null) },
+    Strategy: class { constructor(_: unknown) {} },
+  }));
+  jest.mock('@nestjs/passport', () => ({
+    PassportStrategy: (Base: any) => class extends Base {},
+  }));
+  ```
+
+**Critical gotcha — timezone-safe dates:**
+Always use `new Date(year, month - 1, day)` (local midnight) in test fixtures.
+**Never** use `new Date('YYYY-MM-DD')` (UTC midnight) when passing dates to `date-fns` functions (`startOfWeek`, `addWeeks`, etc.) — the UTC vs local offset causes wrong week boundaries on non-UTC machines.
+
+```ts
+// correct
+const SAT = new Date(2025, 0, 4); // Jan 4 2025, local midnight
+
+// breaks on UTC±N machines
+const SAT = new Date('2025-01-04T00:00:00.000Z');
+```
+
+**Pure services (no mocks needed):**
+`MetricsService`, `MonteCarloService`, `BaselineService` have zero external dependencies — instantiate directly with `new ServiceClass()`.
+
+**Seeded RNG for deterministic Monte Carlo tests:**
+Pass `seed: number` to `runSimulation()` for reproducible output. Omitting `seed` uses `Math.random` (non-deterministic — use only for smoke tests).
 
 ---
 
@@ -134,6 +208,8 @@ pnpm dev          # Next.js dev server (port 3002)
 - API calls must be Next.js Server Side Render
 - Always write unit tests for new utilities
 - Use Portuguese for UI text, English for code
+- Mock the minimum: only stub the methods actually called by the code under test
+- Reset mocks with `jest.clearAllMocks()` in `beforeEach` to prevent cross-test bleed
 
 ---
 
