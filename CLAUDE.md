@@ -119,11 +119,21 @@ pnpm dev          # Next.js dev server (port 3002)
 - **No caching / snapshots:** All metrics (burndown, Monte Carlo, throughput) are computed live from Jira on each request. The `Snapshot` model exists in the schema but is not populated.
 - **Monorepo:** pnpm workspaces. Run commands from the root or per-package. Never use npm or yarn.
 - **Route groups:** Next.js uses `(auth)` and `(dashboard)` groups for layout sharing. Protected routes check JWT via `useAuth()` hook.
+- **Next.js Server Side Render** All API requests must be Server Side Render. No requests to API from browser.
 - **Jira pagination:** Uses cursor-based pagination (Jira API v3) to handle large datasets.
-- **Week boundaries:** Weeks start on Monday. Throughput periods are Monday–Saturday (UTC).
-- **Project begin date:** Always expected to be a Friday.
+- **Week boundaries:** Weeks start on Monday. Throughput periods are Monday–Sunday (UTC).
+- **Project begin date:** Always expected to be a Monday.
 - **Status mapping:** Configurable per project (JSON field `statusConfig`). Supports bilingual statuses (Portuguese + English).
 - **Rate limiting:** 30 requests / 60 seconds globally via `@nestjs/throttler`.
+- All API responses must be validated with Zod
+
+---
+
+## Conventions
+- Use named exports, never default exports
+- API calls must be Next.js Server Side Render
+- Always write unit tests for new utilities
+- Use Portuguese for UI text, English for code
 
 ---
 
@@ -164,7 +174,6 @@ Snapshot: tied to Project (exists in schema, not yet populated)
 ## Known Limitations / TODOs
 
 - Email service is mocked — no real emails are sent in development
-- Excel parser exists (`excel-parser/`) but is not integrated into the main flow
 - Jira OAuth is not implemented; only basic auth (email + API token) is used
 - `Snapshot` model is defined but not written to (all data is fetched live)
 - Production secrets (`JWT_SECRET`, `API_KEY`) must be changed before deployment
@@ -177,3 +186,12 @@ Snapshot: tied to Project (exists in schema, not yet populated)
 - `SECURITY_REPORT.md` in the root contains a security analysis of the project
 - bcrypt cost factor is 12 for password hashing
 - JWT tokens expire after 24 hours
+
+---
+
+## Do Not
+- Do not install new dependencies without asking
+- Do not modify migration files directly
+- Do not use `any` type in TypeScript
+
+---
