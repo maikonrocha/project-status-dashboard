@@ -11,26 +11,22 @@ import { RolesGuard } from './roles.guard';
 import { MailService } from './mail.service';
 
 @Module({
-    imports: [
-        PrismaModule,
-        PassportModule.register({ defaultStrategy: 'jwt' }),
-        JwtModule.registerAsync({
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            useFactory: (config: ConfigService) => ({
-                secret: config.get<string>('JWT_SECRET') || 'dev-secret-key-change-in-production',
-                signOptions: { expiresIn: '24h' },
-            }),
-        }),
-    ],
-    controllers: [AuthController],
-    providers: [
-        AuthService,
-        JwtStrategy,
-        JwtAuthGuard,
-        RolesGuard,
-        MailService,
-    ],
-    exports: [JwtAuthGuard, RolesGuard],
+  imports: [
+    PrismaModule,
+    PassportModule.register({ defaultStrategy: 'jwt' }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret:
+          config.get<string>('JWT_SECRET') ||
+          'dev-secret-key-change-in-production',
+        signOptions: { expiresIn: '24h' },
+      }),
+    }),
+  ],
+  controllers: [AuthController],
+  providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard, MailService],
+  exports: [JwtAuthGuard, RolesGuard],
 })
-export class AuthModule { }
+export class AuthModule {}

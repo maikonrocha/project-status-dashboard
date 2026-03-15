@@ -37,7 +37,11 @@ describe('MailService', () => {
     });
 
     it('logs email and company name to console', async () => {
-      await service.sendInviteEmail('new@test.com', 'Acme Corp', 'invite-token');
+      await service.sendInviteEmail(
+        'new@test.com',
+        'Acme Corp',
+        'invite-token',
+      );
 
       const output = consoleSpy.mock.calls.flat().join(' ');
       expect(output).toContain('new@test.com');

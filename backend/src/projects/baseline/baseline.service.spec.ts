@@ -1,9 +1,9 @@
 import { BaselineService } from './baseline.service';
 
 // Use local midnight dates throughout to keep date-fns computations consistent.
-const BEGIN = new Date(2025, 0, 4);   // Saturday Jan 4, 2025
+const BEGIN = new Date(2025, 0, 4); // Saturday Jan 4, 2025
 const FIVE_WEEKS_OUT = new Date(2025, 1, 8); // Saturday Feb 8, 2025 (5 weeks later)
-const TEN_WEEKS_OUT  = new Date(2025, 2, 15); // Saturday Mar 15, 2025 (~10 weeks)
+const TEN_WEEKS_OUT = new Date(2025, 2, 15); // Saturday Mar 15, 2025 (~10 weeks)
 
 describe('BaselineService', () => {
   let service: BaselineService;
@@ -52,7 +52,9 @@ describe('BaselineService', () => {
       const result = service.computeBaseline(10, BEGIN, FIVE_WEEKS_OUT);
       const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
       for (let i = 1; i < result.length; i++) {
-        expect(result[i].week.getTime() - result[i - 1].week.getTime()).toBe(oneWeekMs);
+        expect(result[i].week.getTime() - result[i - 1].week.getTime()).toBe(
+          oneWeekMs,
+        );
       }
     });
   });

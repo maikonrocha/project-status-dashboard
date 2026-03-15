@@ -1,4 +1,4 @@
-import { ConfigService } from '@nestjs/config';
+import { type ConfigService } from '@nestjs/config';
 import { JiraClientService } from './jira-client.service';
 
 // ─── Axios mock ───────────────────────────────────────────────────────────────
@@ -11,7 +11,9 @@ jest.mock('axios', () => ({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function makeConfigService(overrides: Record<string, string> = {}): ConfigService {
+function makeConfigService(
+  overrides: Record<string, string> = {},
+): ConfigService {
   const cfg: Record<string, string> = {
     JIRA_CLOUD_INSTANCE_URL: 'https://test.atlassian.net',
     JIRA_EMAIL: 'user@test.com',
@@ -104,7 +106,10 @@ describe('JiraClientService', () => {
       mockPost
         .mockResolvedValueOnce({
           data: {
-            issues: [makeRawIssue({ key: 'TST-1' }), makeRawIssue({ key: 'TST-2' })],
+            issues: [
+              makeRawIssue({ key: 'TST-1' }),
+              makeRawIssue({ key: 'TST-2' }),
+            ],
             nextPageToken: 'cursor-page-2',
           },
         })
@@ -132,7 +137,10 @@ describe('JiraClientService', () => {
 
       await service.fetchIssuesByFilter('10001');
 
-      const secondCallPayload = mockPost.mock.calls[1][1] as Record<string, unknown>;
+      const secondCallPayload = mockPost.mock.calls[1][1] as Record<
+        string,
+        unknown
+      >;
       expect(secondCallPayload.nextPageToken).toBe('page-token-x');
     });
   });
@@ -161,27 +169,27 @@ describe('JiraClientService', () => {
     });
 
     it('falls back to "Unknown" status when status field is missing', async () => {
-      const raw = makeRawIssue();
-      (raw.fields as any).status = undefined;
-      mockPost.mockResolvedValueOnce({ data: { issues: [raw] } });
+      mockPost.mockResolvedValueOnce({
+        data: { issues: [makeRawIssue({ status: undefined })] },
+      });
 
       const result = await service.fetchIssuesByFilter('10001');
       expect(result[0].status).toBe('Unknown');
     });
 
     it('falls back to "Task" issueType when issuetype field is missing', async () => {
-      const raw = makeRawIssue();
-      (raw.fields as any).issuetype = undefined;
-      mockPost.mockResolvedValueOnce({ data: { issues: [raw] } });
+      mockPost.mockResolvedValueOnce({
+        data: { issues: [makeRawIssue({ issuetype: undefined })] },
+      });
 
       const result = await service.fetchIssuesByFilter('10001');
       expect(result[0].issueType).toBe('Task');
     });
 
     it('falls back to empty string summary when summary is missing', async () => {
-      const raw = makeRawIssue();
-      (raw.fields as any).summary = undefined;
-      mockPost.mockResolvedValueOnce({ data: { issues: [raw] } });
+      mockPost.mockResolvedValueOnce({
+        data: { issues: [makeRawIssue({ summary: undefined })] },
+      });
 
       const result = await service.fetchIssuesByFilter('10001');
       expect(result[0].summary).toBe('');
@@ -229,7 +237,9 @@ describe('JiraClientService', () => {
     it('propagates network errors from axios', async () => {
       mockPost.mockRejectedValueOnce(new Error('Network timeout'));
 
-      await expect(service.fetchIssuesByFilter('10001')).rejects.toThrow('Network timeout');
+      await expect(service.fetchIssuesByFilter('10001')).rejects.toThrow(
+        'Network timeout',
+      );
     });
   });
 

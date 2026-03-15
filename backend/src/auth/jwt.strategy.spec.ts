@@ -1,4 +1,4 @@
-import { ConfigService } from '@nestjs/config';
+import { type ConfigService } from '@nestjs/config';
 
 // Mock passport-jwt and @nestjs/passport before importing JwtStrategy
 // so the super() constructor call does not attempt real JWT setup.
@@ -20,7 +20,7 @@ jest.mock('@nestjs/passport', () => ({
     },
 }));
 
-import { JwtStrategy, JwtPayload } from './jwt.strategy';
+import { JwtStrategy, type JwtPayload } from './jwt.strategy';
 
 function makeConfigService(secret = 'test-secret'): ConfigService {
   return {

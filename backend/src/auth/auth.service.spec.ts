@@ -4,10 +4,10 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { type JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { MailService } from './mail.service';
+import { type PrismaService } from '../prisma/prisma.service';
+import { type MailService } from './mail.service';
 
 // Mock bcrypt at module level — native bindings can't be spied on with jest.spyOn
 jest.mock('bcrypt', () => ({
@@ -90,12 +90,21 @@ describe('AuthService', () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(null);
       (prisma.company.create as jest.Mock).mockResolvedValueOnce(COMPANY);
       (prisma.user.create as jest.Mock).mockResolvedValueOnce(OWNER_USER);
-      (prisma.verificationCode.updateMany as jest.Mock).mockResolvedValueOnce({});
+      (prisma.verificationCode.updateMany as jest.Mock).mockResolvedValueOnce(
+        {},
+      );
       (prisma.verificationCode.create as jest.Mock).mockResolvedValueOnce({});
 
-      const result = await service.signUpOwner('Owner', 'owner@acme.com', 'pass123', 'Acme Corp');
+      const result = await service.signUpOwner(
+        'Owner',
+        'owner@acme.com',
+        'pass123',
+        'Acme Corp',
+      );
 
-      expect(prisma.company.create).toHaveBeenCalledWith({ data: { name: 'Acme Corp' } });
+      expect(prisma.company.create).toHaveBeenCalledWith({
+        data: { name: 'Acme Corp' },
+      });
       expect(prisma.user.create).toHaveBeenCalled();
       expect(mail.sendVerificationCode).toHaveBeenCalled();
       expect(result.userId).toBe(OWNER_USER.id);
@@ -115,10 +124,17 @@ describe('AuthService', () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(null);
       (prisma.company.create as jest.Mock).mockResolvedValueOnce(COMPANY);
       (prisma.user.create as jest.Mock).mockResolvedValueOnce(OWNER_USER);
-      (prisma.verificationCode.updateMany as jest.Mock).mockResolvedValueOnce({});
+      (prisma.verificationCode.updateMany as jest.Mock).mockResolvedValueOnce(
+        {},
+      );
       (prisma.verificationCode.create as jest.Mock).mockResolvedValueOnce({});
 
-      await service.signUpOwner('Owner', 'owner@acme.com', 'pass123', 'Acme Corp');
+      await service.signUpOwner(
+        'Owner',
+        'owner@acme.com',
+        'pass123',
+        'Acme Corp',
+      );
 
       expect(mockedBcrypt.hash).toHaveBeenCalledWith('pass123', 12);
     });
@@ -128,13 +144,23 @@ describe('AuthService', () => {
 
   describe('completeSignUp', () => {
     it('updates password and sends verification code', async () => {
-      const invitedUser = { ...REGULAR_USER, passwordHash: null, isVerified: false };
+      const invitedUser = {
+        ...REGULAR_USER,
+        passwordHash: null,
+        isVerified: false,
+      };
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(invitedUser);
       (prisma.user.update as jest.Mock).mockResolvedValueOnce(invitedUser);
-      (prisma.verificationCode.updateMany as jest.Mock).mockResolvedValueOnce({});
+      (prisma.verificationCode.updateMany as jest.Mock).mockResolvedValueOnce(
+        {},
+      );
       (prisma.verificationCode.create as jest.Mock).mockResolvedValueOnce({});
 
-      const result = await service.completeSignUp('user2@acme.com', 'New Name', 'newpass');
+      const result = await service.completeSignUp(
+        'user2@acme.com',
+        'New Name',
+        'newpass',
+      );
 
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({ where: { email: 'user2@acme.com' } }),
@@ -170,7 +196,9 @@ describe('AuthService', () => {
       const result = await service.signIn('owner@acme.com', 'pass123');
 
       expect(result).toHaveProperty('accessToken', 'mock-jwt-token');
-      expect((result as any).user.email).toBe('owner@acme.com');
+      expect((result as { user: { email: string } }).user.email).toBe(
+        'owner@acme.com',
+      );
     });
 
     it('throws UnauthorizedException when user does not exist', async () => {
@@ -207,9 +235,9 @@ describe('AuthService', () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(OWNER_USER);
       mockedBcrypt.compare.mockResolvedValueOnce(false as never);
 
-      await expect(service.signIn('owner@acme.com', 'wrongpass')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.signIn('owner@acme.com', 'wrongpass'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('returns requiresVerification and resends code when user is not verified', async () => {
@@ -218,12 +246,16 @@ describe('AuthService', () => {
         isVerified: false,
       });
       mockedBcrypt.compare.mockResolvedValueOnce(true as never);
-      (prisma.verificationCode.updateMany as jest.Mock).mockResolvedValueOnce({});
+      (prisma.verificationCode.updateMany as jest.Mock).mockResolvedValueOnce(
+        {},
+      );
       (prisma.verificationCode.create as jest.Mock).mockResolvedValueOnce({});
 
       const result = await service.signIn('owner@acme.com', 'pass123');
 
-      expect((result as any).requiresVerification).toBe(true);
+      expect(
+        (result as { requiresVerification: boolean }).requiresVerification,
+      ).toBe(true);
       expect(mail.sendVerificationCode).toHaveBeenCalled();
     });
   });
@@ -240,7 +272,9 @@ describe('AuthService', () => {
     };
 
     it('marks code as used, marks user as verified, returns accessToken', async () => {
-      (prisma.verificationCode.findFirst as jest.Mock).mockResolvedValueOnce(VALID_CODE_RECORD);
+      (prisma.verificationCode.findFirst as jest.Mock).mockResolvedValueOnce(
+        VALID_CODE_RECORD,
+      );
       (prisma.verificationCode.update as jest.Mock).mockResolvedValueOnce({});
       (prisma.user.update as jest.Mock).mockResolvedValueOnce(OWNER_USER);
 
@@ -256,11 +290,13 @@ describe('AuthService', () => {
     });
 
     it('throws BadRequestException when code is invalid or expired', async () => {
-      (prisma.verificationCode.findFirst as jest.Mock).mockResolvedValueOnce(null);
-
-      await expect(service.verifyCode('owner@acme.com', '000000')).rejects.toThrow(
-        BadRequestException,
+      (prisma.verificationCode.findFirst as jest.Mock).mockResolvedValueOnce(
+        null,
       );
+
+      await expect(
+        service.verifyCode('owner@acme.com', '000000'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -272,7 +308,9 @@ describe('AuthService', () => {
         ...OWNER_USER,
         isVerified: false,
       });
-      (prisma.verificationCode.updateMany as jest.Mock).mockResolvedValueOnce({});
+      (prisma.verificationCode.updateMany as jest.Mock).mockResolvedValueOnce(
+        {},
+      );
       (prisma.verificationCode.create as jest.Mock).mockResolvedValueOnce({});
 
       const result = await service.resendCode('owner@acme.com');
@@ -284,13 +322,17 @@ describe('AuthService', () => {
     it('throws NotFoundException when user does not exist', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(null);
 
-      await expect(service.resendCode('nobody@acme.com')).rejects.toThrow(NotFoundException);
+      await expect(service.resendCode('nobody@acme.com')).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws BadRequestException when user is already verified', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(OWNER_USER); // isVerified: true
 
-      await expect(service.resendCode('owner@acme.com')).rejects.toThrow(BadRequestException);
+      await expect(service.resendCode('owner@acme.com')).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -302,7 +344,10 @@ describe('AuthService', () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(OWNER_USER);
       // invited email does not exist yet
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(null);
-      (prisma.user.create as jest.Mock).mockResolvedValueOnce({ ...REGULAR_USER, id: 'new-uuid' });
+      (prisma.user.create as jest.Mock).mockResolvedValueOnce({
+        ...REGULAR_USER,
+        id: 'new-uuid',
+      });
 
       const result = await service.inviteUser(OWNER_USER.id, 'new@acme.com');
 
@@ -318,18 +363,18 @@ describe('AuthService', () => {
     it('throws UnauthorizedException when the invoker is not an OWNER', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(REGULAR_USER); // role: USER
 
-      await expect(service.inviteUser(REGULAR_USER.id, 'new@acme.com')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.inviteUser(REGULAR_USER.id, 'new@acme.com'),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('throws ConflictException when invited email already exists', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(OWNER_USER); // owner
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(REGULAR_USER); // existing email
 
-      await expect(service.inviteUser(OWNER_USER.id, 'owner@acme.com')).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(
+        service.inviteUser(OWNER_USER.id, 'owner@acme.com'),
+      ).rejects.toThrow(ConflictException);
     });
   });
 
@@ -349,7 +394,9 @@ describe('AuthService', () => {
     it('throws NotFoundException when userId does not exist', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(null);
 
-      await expect(service.getMe('nonexistent-id')).rejects.toThrow(NotFoundException);
+      await expect(service.getMe('nonexistent-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

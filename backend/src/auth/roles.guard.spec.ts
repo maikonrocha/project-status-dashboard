@@ -1,9 +1,12 @@
-import { ExecutionContext } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { type ExecutionContext } from '@nestjs/common';
+import { type Reflector } from '@nestjs/core';
 import { RolesGuard } from './roles.guard';
 import { ROLES_KEY } from './roles.decorator';
 
-function makeContext(user: unknown = undefined, requiredRoles: string[] | undefined = undefined): ExecutionContext {
+function makeContext(
+  user: unknown = undefined,
+  _requiredRoles: string[] | undefined = undefined,
+): ExecutionContext {
   const handler = {};
   const cls = {};
 
@@ -15,8 +18,8 @@ function makeContext(user: unknown = undefined, requiredRoles: string[] | undefi
     }),
     getArgs: () => [],
     getArgByIndex: () => null,
-    switchToRpc: () => ({} as any),
-    switchToWs: () => ({} as any),
+    switchToRpc: () => ({}),
+    switchToWs: () => ({}),
     getType: () => 'http',
   } as unknown as ExecutionContext;
 }

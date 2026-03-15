@@ -1,10 +1,10 @@
 import { BadGatewayException, NotFoundException } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { MetricsService } from './metrics/metrics.service';
-import { MonteCarloService } from './monte-carlo/monte-carlo.service';
-import { BaselineService } from './baseline/baseline.service';
-import { JiraClientService } from '../jira/jira-client.service';
+import { type PrismaService } from '../prisma/prisma.service';
+import { type MetricsService } from './metrics/metrics.service';
+import { type MonteCarloService } from './monte-carlo/monte-carlo.service';
+import { type BaselineService } from './baseline/baseline.service';
+import { type JiraClientService } from '../jira/jira-client.service';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -127,7 +127,9 @@ describe('ProjectsService', () => {
       const result = await service.create(dto, COMPANY_ID);
 
       expect(prisma.project.create).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ companyId: COMPANY_ID }) }),
+        expect.objectContaining({
+          data: expect.objectContaining({ companyId: COMPANY_ID }),
+        }),
       );
       expect(result).toBe(PROJECT);
     });
@@ -181,13 +183,17 @@ describe('ProjectsService', () => {
     it('throws NotFoundException when project does not exist', async () => {
       (prisma.project.findUnique as jest.Mock).mockResolvedValueOnce(null);
 
-      await expect(service.findOne('nonexistent', COMPANY_ID)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('nonexistent', COMPANY_ID)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws NotFoundException when project belongs to a different company', async () => {
       (prisma.project.findUnique as jest.Mock).mockResolvedValueOnce(PROJECT);
 
-      await expect(service.findOne(PROJECT_ID, 'other-company')).rejects.toThrow(NotFoundException);
+      await expect(
+        service.findOne(PROJECT_ID, 'other-company'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('returns project without company check when companyId is omitted', async () => {
@@ -203,9 +209,16 @@ describe('ProjectsService', () => {
   describe('update', () => {
     it('finds project then updates it', async () => {
       (prisma.project.findUnique as jest.Mock).mockResolvedValueOnce(PROJECT);
-      (prisma.project.update as jest.Mock).mockResolvedValueOnce({ ...PROJECT, name: 'Updated' });
+      (prisma.project.update as jest.Mock).mockResolvedValueOnce({
+        ...PROJECT,
+        name: 'Updated',
+      });
 
-      const result = await service.update(PROJECT_ID, { name: 'Updated' }, COMPANY_ID);
+      const result = await service.update(
+        PROJECT_ID,
+        { name: 'Updated' },
+        COMPANY_ID,
+      );
 
       expect(prisma.project.update).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: PROJECT_ID } }),
@@ -216,9 +229,9 @@ describe('ProjectsService', () => {
     it('throws NotFoundException when project does not exist', async () => {
       (prisma.project.findUnique as jest.Mock).mockResolvedValueOnce(null);
 
-      await expect(service.update('bad-id', { name: 'X' }, COMPANY_ID)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.update('bad-id', { name: 'X' }, COMPANY_ID),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -231,14 +244,18 @@ describe('ProjectsService', () => {
 
       const result = await service.remove(PROJECT_ID, COMPANY_ID);
 
-      expect(prisma.project.delete).toHaveBeenCalledWith({ where: { id: PROJECT_ID } });
+      expect(prisma.project.delete).toHaveBeenCalledWith({
+        where: { id: PROJECT_ID },
+      });
       expect(result).toBe(PROJECT);
     });
 
     it('throws NotFoundException when project does not exist', async () => {
       (prisma.project.findUnique as jest.Mock).mockResolvedValueOnce(null);
 
-      await expect(service.remove('bad-id', COMPANY_ID)).rejects.toThrow(NotFoundException);
+      await expect(service.remove('bad-id', COMPANY_ID)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -253,7 +270,7 @@ describe('ProjectsService', () => {
       const open = makeIssue(null);
       (jira.fetchIssuesByFilter as jest.Mock)
         .mockResolvedValueOnce([resolved, open]) // backlog
-        .mockResolvedValueOnce([resolved]);       // throughput
+        .mockResolvedValueOnce([resolved]); // throughput
     });
 
     it('returns a StatusDashboardDto with correct project metadata', async () => {
@@ -266,8 +283,12 @@ describe('ProjectsService', () => {
     it('calls fetchIssuesByFilter for both backlog and throughput filters', async () => {
       await service.getStatus(PROJECT_ID, COMPANY_ID);
 
-      expect(jira.fetchIssuesByFilter).toHaveBeenCalledWith(PROJECT.jiraBacklogFilterId);
-      expect(jira.fetchIssuesByFilter).toHaveBeenCalledWith(PROJECT.jiraThroughputFilterId);
+      expect(jira.fetchIssuesByFilter).toHaveBeenCalledWith(
+        PROJECT.jiraBacklogFilterId,
+      );
+      expect(jira.fetchIssuesByFilter).toHaveBeenCalledWith(
+        PROJECT.jiraThroughputFilterId,
+      );
     });
 
     it('calls computeWeeklyMetricsFromIssues with fetched issues', async () => {
@@ -311,15 +332,21 @@ describe('ProjectsService', () => {
 
     it('throws BadGatewayException when Jira call fails', async () => {
       // Reset and override: the first call throws, regardless of beforeEach queue
-      (jira.fetchIssuesByFilter as jest.Mock).mockReset().mockRejectedValue(new Error('Jira down'));
+      (jira.fetchIssuesByFilter as jest.Mock)
+        .mockReset()
+        .mockRejectedValue(new Error('Jira down'));
 
-      await expect(service.getStatus(PROJECT_ID, COMPANY_ID)).rejects.toThrow(BadGatewayException);
+      await expect(service.getStatus(PROJECT_ID, COMPANY_ID)).rejects.toThrow(
+        BadGatewayException,
+      );
     });
 
     it('throws NotFoundException when project does not exist', async () => {
       (prisma.project.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.getStatus('bad-id', COMPANY_ID)).rejects.toThrow(NotFoundException);
+      await expect(service.getStatus('bad-id', COMPANY_ID)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('returns empty tables when backlog is empty', async () => {
@@ -366,15 +393,19 @@ describe('ProjectsService', () => {
       older['key'] = 'TST-OLD';
       newer['key'] = 'TST-NEW';
 
-      (jira.fetchIssuesByFilter as jest.Mock).mockReset()
-        .mockResolvedValueOnce([older, newer])  // backlog
+      (jira.fetchIssuesByFilter as jest.Mock)
+        .mockReset()
+        .mockResolvedValueOnce([older, newer]) // backlog
         .mockResolvedValueOnce([older, newer]); // throughput
 
       const result = await service.getStatus(PROJECT_ID, COMPANY_ID);
 
       // Newest resolution date should come first
-      expect(result.tables.recentCompleted[0].resolutionDate.getTime())
-        .toBeGreaterThanOrEqual(result.tables.recentCompleted[1].resolutionDate.getTime());
+      expect(
+        result.tables.recentCompleted[0].resolutionDate.getTime(),
+      ).toBeGreaterThanOrEqual(
+        result.tables.recentCompleted[1].resolutionDate.getTime(),
+      );
     });
   });
 });

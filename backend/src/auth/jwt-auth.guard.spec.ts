@@ -1,10 +1,13 @@
-import { ExecutionContext } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { type ExecutionContext } from '@nestjs/common';
+import { type Reflector } from '@nestjs/core';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { IS_PUBLIC_KEY } from './public.decorator';
 
 // Helper: build a minimal ExecutionContext mock
-function makeContext(handlerMeta: unknown = undefined, classMeta: unknown = undefined): ExecutionContext {
+function makeContext(
+  _handlerMeta: unknown = undefined,
+  _classMeta: unknown = undefined,
+): ExecutionContext {
   return {
     getHandler: () => ({}),
     getClass: () => ({}),
@@ -15,8 +18,8 @@ function makeContext(handlerMeta: unknown = undefined, classMeta: unknown = unde
     }),
     getArgs: () => [],
     getArgByIndex: () => null,
-    switchToRpc: () => ({} as any),
-    switchToWs: () => ({} as any),
+    switchToRpc: () => ({}),
+    switchToWs: () => ({}),
     getType: () => 'http',
   } as unknown as ExecutionContext;
 }
@@ -52,7 +55,7 @@ describe('JwtAuthGuard', () => {
     // Spy on the parent AuthGuard's canActivate
     const superCanActivate = jest
       .spyOn(Object.getPrototypeOf(JwtAuthGuard.prototype), 'canActivate')
-      .mockReturnValueOnce(true as any);
+      .mockReturnValueOnce(true);
 
     const context = makeContext();
     const result = guard.canActivate(context);
@@ -68,10 +71,10 @@ describe('JwtAuthGuard', () => {
 
     const superCanActivate = jest
       .spyOn(Object.getPrototypeOf(JwtAuthGuard.prototype), 'canActivate')
-      .mockReturnValueOnce(false as any);
+      .mockReturnValueOnce(false);
 
     const context = makeContext();
-    guard.canActivate(context);
+    void guard.canActivate(context);
 
     expect(superCanActivate).toHaveBeenCalled();
     superCanActivate.mockRestore();

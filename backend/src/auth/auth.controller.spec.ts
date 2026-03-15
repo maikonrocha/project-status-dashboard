@@ -1,6 +1,7 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import type { RequestWithUser } from './jwt.strategy';
 
 // ─── Mock AuthService ─────────────────────────────────────────────────────────
 
@@ -17,8 +18,13 @@ const mockAuthService = {
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
-const REQ_WITH_USER = {
-  user: { id: 'user-uuid', companyId: 'company-uuid', role: 'OWNER' },
+const REQ_WITH_USER: RequestWithUser = {
+  user: {
+    id: 'user-uuid',
+    companyId: 'company-uuid',
+    role: 'OWNER',
+    email: 'user@test.com',
+  },
 };
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -41,14 +47,22 @@ describe('AuthController', () => {
 
   describe('signUp', () => {
     it('delegates to authService.signUpOwner with dto fields', async () => {
-      const dto = { name: 'Alice', email: 'alice@test.com', password: 'pw', companyName: 'Acme' };
+      const dto = {
+        name: 'Alice',
+        email: 'alice@test.com',
+        password: 'pw',
+        companyName: 'Acme',
+      };
       const expected = { message: 'ok', userId: 'u1', email: dto.email };
       mockAuthService.signUpOwner.mockResolvedValueOnce(expected);
 
-      const result = await controller.signUp(dto as any);
+      const result = await controller.signUp(dto);
 
       expect(mockAuthService.signUpOwner).toHaveBeenCalledWith(
-        dto.name, dto.email, dto.password, dto.companyName,
+        dto.name,
+        dto.email,
+        dto.password,
+        dto.companyName,
       );
       expect(result).toBe(expected);
     });
@@ -62,10 +76,12 @@ describe('AuthController', () => {
       const expected = { message: 'done', email: dto.email };
       mockAuthService.completeSignUp.mockResolvedValueOnce(expected);
 
-      const result = await controller.completeSignUp(dto as any);
+      const result = await controller.completeSignUp(dto);
 
       expect(mockAuthService.completeSignUp).toHaveBeenCalledWith(
-        dto.email, dto.name, dto.password,
+        dto.email,
+        dto.name,
+        dto.password,
       );
       expect(result).toBe(expected);
     });
@@ -79,9 +95,12 @@ describe('AuthController', () => {
       const expected = { accessToken: 'token', user: {} };
       mockAuthService.signIn.mockResolvedValueOnce(expected);
 
-      const result = await controller.signIn(dto as any);
+      const result = await controller.signIn(dto);
 
-      expect(mockAuthService.signIn).toHaveBeenCalledWith(dto.email, dto.password);
+      expect(mockAuthService.signIn).toHaveBeenCalledWith(
+        dto.email,
+        dto.password,
+      );
       expect(result).toBe(expected);
     });
   });
@@ -94,9 +113,12 @@ describe('AuthController', () => {
       const expected = { accessToken: 'token', user: {} };
       mockAuthService.verifyCode.mockResolvedValueOnce(expected);
 
-      const result = await controller.verify(dto as any);
+      const result = await controller.verify(dto);
 
-      expect(mockAuthService.verifyCode).toHaveBeenCalledWith(dto.email, dto.code);
+      expect(mockAuthService.verifyCode).toHaveBeenCalledWith(
+        dto.email,
+        dto.code,
+      );
       expect(result).toBe(expected);
     });
   });
@@ -109,7 +131,7 @@ describe('AuthController', () => {
       const expected = { message: 'sent' };
       mockAuthService.resendCode.mockResolvedValueOnce(expected);
 
-      const result = await controller.resendCode(dto as any);
+      const result = await controller.resendCode(dto);
 
       expect(mockAuthService.resendCode).toHaveBeenCalledWith(dto.email);
       expect(result).toBe(expected);
@@ -121,13 +143,17 @@ describe('AuthController', () => {
   describe('invite', () => {
     it('delegates to authService.inviteUser using req.user.id', async () => {
       const dto = { email: 'new@test.com' };
-      const expected = { message: 'Invitation sent to new@test.com.', userId: 'new-uuid' };
+      const expected = {
+        message: 'Invitation sent to new@test.com.',
+        userId: 'new-uuid',
+      };
       mockAuthService.inviteUser.mockResolvedValueOnce(expected);
 
-      const result = await controller.invite(REQ_WITH_USER as any, dto as any);
+      const result = await controller.invite(REQ_WITH_USER, dto);
 
       expect(mockAuthService.inviteUser).toHaveBeenCalledWith(
-        REQ_WITH_USER.user.id, dto.email,
+        REQ_WITH_USER.user.id,
+        dto.email,
       );
       expect(result).toBe(expected);
     });
@@ -137,10 +163,14 @@ describe('AuthController', () => {
 
   describe('getMe', () => {
     it('delegates to authService.getMe using req.user.id', async () => {
-      const expected = { id: 'user-uuid', email: 'alice@test.com', name: 'Alice' };
+      const expected = {
+        id: 'user-uuid',
+        email: 'alice@test.com',
+        name: 'Alice',
+      };
       mockAuthService.getMe.mockResolvedValueOnce(expected);
 
-      const result = await controller.getMe(REQ_WITH_USER as any);
+      const result = await controller.getMe(REQ_WITH_USER);
 
       expect(mockAuthService.getMe).toHaveBeenCalledWith(REQ_WITH_USER.user.id);
       expect(result).toBe(expected);
@@ -154,9 +184,11 @@ describe('AuthController', () => {
       const expected = [{ id: 'u1' }, { id: 'u2' }];
       mockAuthService.getCompanyUsers.mockResolvedValueOnce(expected);
 
-      const result = await controller.getUsers(REQ_WITH_USER as any);
+      const result = await controller.getUsers(REQ_WITH_USER);
 
-      expect(mockAuthService.getCompanyUsers).toHaveBeenCalledWith(REQ_WITH_USER.user.companyId);
+      expect(mockAuthService.getCompanyUsers).toHaveBeenCalledWith(
+        REQ_WITH_USER.user.companyId,
+      );
       expect(result).toBe(expected);
     });
   });

@@ -1,10 +1,10 @@
-import { MetricsService, WeeklyMetricRow } from './metrics.service';
-import { JiraIssueData } from '../../jira/jira-client.service';
+import { MetricsService, type WeeklyMetricRow } from './metrics.service';
+import { type JiraIssueData } from '../../jira/jira-client.service';
 
 // Use new Date(year, month-1, day) (local midnight) so date-fns startOfWeek results
 // match the expected values regardless of the host timezone.
 // All dates below are Saturdays in local time.
-const SAT_2025_01_04 = new Date(2025, 0, 4);  // Saturday, Jan  4 2025
+const SAT_2025_01_04 = new Date(2025, 0, 4); // Saturday, Jan  4 2025
 const SAT_2025_01_11 = new Date(2025, 0, 11); // Saturday, Jan 11 2025
 const SAT_2025_01_18 = new Date(2025, 0, 18); // Saturday, Jan 18 2025
 const SAT_2025_01_25 = new Date(2025, 0, 25); // Saturday, Jan 25 2025
@@ -72,7 +72,11 @@ describe('MetricsService', () => {
 
   describe('computeWeeklyMetricsFromIssues', () => {
     it('returns empty array when both lists are empty', () => {
-      const result = service.computeWeeklyMetricsFromIssues([], [], SAT_2025_01_04);
+      const result = service.computeWeeklyMetricsFromIssues(
+        [],
+        [],
+        SAT_2025_01_04,
+      );
       expect(result).toEqual([]);
     });
 
@@ -86,7 +90,11 @@ describe('MetricsService', () => {
         makeIssue({ key: 'TST-3', resolutionDate: new Date(2025, 0, 7) }),
       ];
 
-      const rows = service.computeWeeklyMetricsFromIssues(throughput, backlog, SAT_2025_01_04);
+      const rows = service.computeWeeklyMetricsFromIssues(
+        throughput,
+        backlog,
+        SAT_2025_01_04,
+      );
       for (const row of rows) {
         expect(row.totalScope).toBe(3);
       }
@@ -106,10 +114,18 @@ describe('MetricsService', () => {
       ];
       const backlog = [...throughput];
 
-      const rows = service.computeWeeklyMetricsFromIssues(throughput, backlog, SAT_2025_01_04);
+      const rows = service.computeWeeklyMetricsFromIssues(
+        throughput,
+        backlog,
+        SAT_2025_01_04,
+      );
 
-      const week1Row = rows.find((r) => r.weekStart.getTime() === SAT_2025_01_04.getTime());
-      const week2Row = rows.find((r) => r.weekStart.getTime() === SAT_2025_01_11.getTime());
+      const week1Row = rows.find(
+        (r) => r.weekStart.getTime() === SAT_2025_01_04.getTime(),
+      );
+      const week2Row = rows.find(
+        (r) => r.weekStart.getTime() === SAT_2025_01_11.getTime(),
+      );
 
       expect(week1Row).toBeDefined();
       expect(week2Row).toBeDefined();
@@ -118,7 +134,7 @@ describe('MetricsService', () => {
     });
 
     it('remainingCount decreases as backlog items are resolved over weeks', () => {
-      const resolved1 = new Date(2025, 0, 6);  // inside week of Jan-04
+      const resolved1 = new Date(2025, 0, 6); // inside week of Jan-04
       const resolved2 = new Date(2025, 0, 13); // inside week of Jan-11
 
       const backlog = [
@@ -131,20 +147,30 @@ describe('MetricsService', () => {
         makeIssue({ key: 'B-2', resolutionDate: resolved2 }),
       ];
 
-      const rows = service.computeWeeklyMetricsFromIssues(throughput, backlog, SAT_2025_01_04);
+      const rows = service.computeWeeklyMetricsFromIssues(
+        throughput,
+        backlog,
+        SAT_2025_01_04,
+      );
 
       // At week Jan-04: no backlog item resolved before Jan-04 → remaining = 3
-      const week1 = rows.find((r) => r.weekStart.getTime() === SAT_2025_01_04.getTime());
+      const week1 = rows.find(
+        (r) => r.weekStart.getTime() === SAT_2025_01_04.getTime(),
+      );
       expect(week1).toBeDefined();
       expect(week1!.remainingCount).toBe(3);
 
       // At week Jan-11: B-1 resolved before Jan-11 → remaining = 2
-      const week2 = rows.find((r) => r.weekStart.getTime() === SAT_2025_01_11.getTime());
+      const week2 = rows.find(
+        (r) => r.weekStart.getTime() === SAT_2025_01_11.getTime(),
+      );
       expect(week2).toBeDefined();
       expect(week2!.remainingCount).toBe(2);
 
       // At week Jan-18: B-1 and B-2 resolved before Jan-18 → remaining = 1
-      const week3 = rows.find((r) => r.weekStart.getTime() === SAT_2025_01_18.getTime());
+      const week3 = rows.find(
+        (r) => r.weekStart.getTime() === SAT_2025_01_18.getTime(),
+      );
       expect(week3).toBeDefined();
       expect(week3!.remainingCount).toBe(1);
     });
@@ -153,7 +179,11 @@ describe('MetricsService', () => {
       const backlog = [makeIssue({ resolutionDate: new Date(2024, 0, 1) })];
       const throughput = [makeIssue({ resolutionDate: new Date(2024, 0, 1) })];
 
-      const rows = service.computeWeeklyMetricsFromIssues(throughput, backlog, SAT_2025_01_04);
+      const rows = service.computeWeeklyMetricsFromIssues(
+        throughput,
+        backlog,
+        SAT_2025_01_04,
+      );
       for (const row of rows) {
         expect(row.remainingCount).toBeGreaterThanOrEqual(0);
       }
@@ -163,7 +193,11 @@ describe('MetricsService', () => {
       const backlog = [makeIssue({ resolutionDate: null })];
       const throughput: JiraIssueData[] = [];
 
-      const rows = service.computeWeeklyMetricsFromIssues(throughput, backlog, SAT_2025_01_04);
+      const rows = service.computeWeeklyMetricsFromIssues(
+        throughput,
+        backlog,
+        SAT_2025_01_04,
+      );
       for (const row of rows) {
         expect(row.baselineValue).toBe(0);
       }
@@ -171,7 +205,11 @@ describe('MetricsService', () => {
 
     it('generates at least one row for non-empty issue lists', () => {
       const backlog = [makeIssue({ resolutionDate: null })];
-      const rows = service.computeWeeklyMetricsFromIssues([], backlog, SAT_2025_01_04);
+      const rows = service.computeWeeklyMetricsFromIssues(
+        [],
+        backlog,
+        SAT_2025_01_04,
+      );
       expect(rows.length).toBeGreaterThan(0);
     });
 
@@ -181,7 +219,11 @@ describe('MetricsService', () => {
       const futureBegin = new Date(2099, 0, 4); // Saturday far in the future
       const backlog = [makeIssue({ resolutionDate: null })];
 
-      const rows = service.computeWeeklyMetricsFromIssues([], backlog, futureBegin);
+      const rows = service.computeWeeklyMetricsFromIssues(
+        [],
+        backlog,
+        futureBegin,
+      );
 
       // Must produce at least one row (today's week)
       expect(rows.length).toBeGreaterThan(0);
@@ -195,9 +237,30 @@ describe('MetricsService', () => {
   describe('getThroughputDistribution', () => {
     it('extracts weeklyThroughput from each row', () => {
       const rows: WeeklyMetricRow[] = [
-        { weekStart: SAT_2025_01_04, totalScope: 10, completedCount: 2, remainingCount: 8, weeklyThroughput: 2, baselineValue: 0 },
-        { weekStart: SAT_2025_01_11, totalScope: 10, completedCount: 5, remainingCount: 5, weeklyThroughput: 3, baselineValue: 0 },
-        { weekStart: SAT_2025_01_18, totalScope: 10, completedCount: 6, remainingCount: 4, weeklyThroughput: 1, baselineValue: 0 },
+        {
+          weekStart: SAT_2025_01_04,
+          totalScope: 10,
+          completedCount: 2,
+          remainingCount: 8,
+          weeklyThroughput: 2,
+          baselineValue: 0,
+        },
+        {
+          weekStart: SAT_2025_01_11,
+          totalScope: 10,
+          completedCount: 5,
+          remainingCount: 5,
+          weeklyThroughput: 3,
+          baselineValue: 0,
+        },
+        {
+          weekStart: SAT_2025_01_18,
+          totalScope: 10,
+          completedCount: 6,
+          remainingCount: 4,
+          weeklyThroughput: 1,
+          baselineValue: 0,
+        },
       ];
       expect(service.getThroughputDistribution(rows)).toEqual([2, 3, 1]);
     });
@@ -216,15 +279,36 @@ describe('MetricsService', () => {
 
     it('computes the arithmetic mean of weeklyThroughput values', () => {
       const rows: WeeklyMetricRow[] = [
-        { weekStart: SAT_2025_01_04, totalScope: 10, completedCount: 2, remainingCount: 8, weeklyThroughput: 4, baselineValue: 0 },
-        { weekStart: SAT_2025_01_11, totalScope: 10, completedCount: 6, remainingCount: 4, weeklyThroughput: 6, baselineValue: 0 },
+        {
+          weekStart: SAT_2025_01_04,
+          totalScope: 10,
+          completedCount: 2,
+          remainingCount: 8,
+          weeklyThroughput: 4,
+          baselineValue: 0,
+        },
+        {
+          weekStart: SAT_2025_01_11,
+          totalScope: 10,
+          completedCount: 6,
+          remainingCount: 4,
+          weeklyThroughput: 6,
+          baselineValue: 0,
+        },
       ];
       expect(service.getAverageWeeklyThroughput(rows)).toBe(5);
     });
 
     it('returns the single value when there is one row', () => {
       const rows: WeeklyMetricRow[] = [
-        { weekStart: SAT_2025_01_04, totalScope: 5, completedCount: 3, remainingCount: 2, weeklyThroughput: 3, baselineValue: 0 },
+        {
+          weekStart: SAT_2025_01_04,
+          totalScope: 5,
+          completedCount: 3,
+          remainingCount: 2,
+          weeklyThroughput: 3,
+          baselineValue: 0,
+        },
       ];
       expect(service.getAverageWeeklyThroughput(rows)).toBe(3);
     });
@@ -239,8 +323,22 @@ describe('MetricsService', () => {
 
     it('returns the last row weeklyThroughput', () => {
       const rows: WeeklyMetricRow[] = [
-        { weekStart: SAT_2025_01_04, totalScope: 10, completedCount: 2, remainingCount: 8, weeklyThroughput: 2, baselineValue: 0 },
-        { weekStart: SAT_2025_01_11, totalScope: 10, completedCount: 5, remainingCount: 5, weeklyThroughput: 7, baselineValue: 0 },
+        {
+          weekStart: SAT_2025_01_04,
+          totalScope: 10,
+          completedCount: 2,
+          remainingCount: 8,
+          weeklyThroughput: 2,
+          baselineValue: 0,
+        },
+        {
+          weekStart: SAT_2025_01_11,
+          totalScope: 10,
+          completedCount: 5,
+          remainingCount: 5,
+          weeklyThroughput: 7,
+          baselineValue: 0,
+        },
       ];
       expect(service.getCurrentWeekThroughput(rows)).toBe(7);
     });

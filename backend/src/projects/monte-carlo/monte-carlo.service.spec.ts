@@ -1,4 +1,7 @@
-import { MonteCarloService, SimulationParams } from './monte-carlo.service';
+import {
+  MonteCarloService,
+  type SimulationParams,
+} from './monte-carlo.service';
 
 // Use local midnight to avoid timezone mismatches with date-fns addWeeks.
 const START_DATE = new Date(2025, 5, 1); // June 1, 2025 (local)
@@ -63,8 +66,12 @@ describe('MonteCarloService', () => {
         seed: 42,
       });
 
-      expect(result.p50Date.getTime()).toBeLessThanOrEqual(result.p85Date.getTime());
-      expect(result.p85Date.getTime()).toBeLessThanOrEqual(result.p95Date.getTime());
+      expect(result.p50Date.getTime()).toBeLessThanOrEqual(
+        result.p85Date.getTime(),
+      );
+      expect(result.p85Date.getTime()).toBeLessThanOrEqual(
+        result.p95Date.getTime(),
+      );
     });
 
     it('all percentile dates are on or after startDate', () => {
@@ -76,9 +83,15 @@ describe('MonteCarloService', () => {
         seed: 7,
       });
 
-      expect(result.p50Date.getTime()).toBeGreaterThanOrEqual(START_DATE.getTime());
-      expect(result.p85Date.getTime()).toBeGreaterThanOrEqual(START_DATE.getTime());
-      expect(result.p95Date.getTime()).toBeGreaterThanOrEqual(START_DATE.getTime());
+      expect(result.p50Date.getTime()).toBeGreaterThanOrEqual(
+        START_DATE.getTime(),
+      );
+      expect(result.p85Date.getTime()).toBeGreaterThanOrEqual(
+        START_DATE.getTime(),
+      );
+      expect(result.p95Date.getTime()).toBeGreaterThanOrEqual(
+        START_DATE.getTime(),
+      );
     });
   });
 

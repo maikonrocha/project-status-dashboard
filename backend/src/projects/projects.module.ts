@@ -16,4 +16,4 @@ import { JiraModule } from '../jira/jira.module';
     BaselineService,
   ],
 })
-export class ProjectsModule { }
+export class ProjectsModule {}

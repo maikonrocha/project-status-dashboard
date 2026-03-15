@@ -1,5 +1,5 @@
-import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { type ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import { type ConfigService } from '@nestjs/config';
 import { ApiKeyGuard } from './api-key.guard';
 
 function makeConfigService(values: Record<string, string>): ConfigService {
@@ -58,9 +58,7 @@ describe('ApiKeyGuard', () => {
     });
 
     it('defaults to development when NODE_ENV is not set', () => {
-      const guard = new ApiKeyGuard(
-        makeConfigService({ API_KEY: '' }),
-      );
+      const guard = new ApiKeyGuard(makeConfigService({ API_KEY: '' }));
       const ctx = makeContext({});
       expect(guard.canActivate(ctx)).toBe(true);
     });
