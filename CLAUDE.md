@@ -103,6 +103,7 @@ pnpm lint         # lint all packages
 # Backend only
 cd backend
 pnpm start:dev    # hot-reload watch mode
+pnpm test         # run all unit tests (Jest)
 pnpm test:cov     # run with Istanbul coverage report → backend/coverage/
 pnpm test:watch   # watch mode — re-runs on file save
 pnpm exec jest src/path/to/file.spec.ts                    # run a single spec file
@@ -128,6 +129,7 @@ pnpm dev          # Next.js dev server (port 3002)
 |---|---|
 | `jest` + `ts-jest` | Test runner & TS transpilation |
 | `@nestjs/testing` | `Test.createTestingModule()` for controller/service DI |
+| `supertest` | HTTP-level controller integration tests |
 
 **Spec file location:** `*.spec.ts` placed next to the source file it tests. See Scripts for run commands.
 
@@ -208,6 +210,9 @@ Pass `seed: number` to `runSimulation()` for reproducible output. Omitting `seed
 - API calls must be Next.js Server Side Render
 - Always write unit tests for new utilities
 - Use Portuguese for UI text, English for code
+- Spec files live next to their source file (`foo.service.spec.ts` beside `foo.service.ts`)
+- Never use `jest.spyOn` on native-binding modules (bcrypt, pg) — use `jest.mock()` at module level instead
+- Use `new Date(year, month - 1, day)` for date fixtures; never `new Date('YYYY-MM-DD')` (timezone bug)
 - Mock the minimum: only stub the methods actually called by the code under test
 - Reset mocks with `jest.clearAllMocks()` in `beforeEach` to prevent cross-test bleed
 
