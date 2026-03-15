@@ -45,6 +45,7 @@
     "msw": "^2.12.10",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "prettier": "^3.4.2",
     "vitest": "^4.1.0"
   }
 }

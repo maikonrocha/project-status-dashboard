@@ -268,6 +268,9 @@ importers:
       msw:
         specifier: ^2.12.10
         version: 2.12.10(@types/node@20.19.30)(typescript@5.9.3)
+      prettier:
+        specifier: ^3.4.2
+        version: 3.8.1
       tailwindcss:
         specifier: ^4
         version: 4.1.18
