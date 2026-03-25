@@ -9,16 +9,6 @@
     "lint": "pnpm -r lint",
     "prepare": "husky"
   },
-  "lint-staged": {
-    "backend/**/*.ts": [
-      "pnpm --filter backend run lint",
-      "pnpm --filter backend run format"
-    ],
-    "frontend/**/*.{ts,tsx}": [
-      "pnpm --filter frontend run lint:fix",
-      "pnpm --filter frontend run format"
-    ]
-  },
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
