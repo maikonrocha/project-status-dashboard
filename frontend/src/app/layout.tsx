@@ -14,9 +14,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const suppressWarning = process.env.NODE_ENV === 'development';
+
   return (
-    <html lang="en">
-      <body className={`${inter.className} min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white`}>
+    <html
+      lang="en"
+      {...(suppressWarning && { suppressHydrationWarning: true })}
+    >
+      <body
+        className={`${inter.className} min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white`}
+      >
         {children}
       </body>
     </html>

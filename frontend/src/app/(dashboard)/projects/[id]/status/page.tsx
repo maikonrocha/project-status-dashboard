@@ -9,21 +9,12 @@ export default async function StatusPage({
 }) {
   const { id: projectId } = await params;
 
-  try {
-    const [data, projects] = await Promise.all([
-      serverApi.getStatus(projectId),
-      serverApi.getProjects(),
-    ]);
+  const result = await Promise.all([
+    serverApi.getStatus(projectId),
+    serverApi.getProjects(),
+  ]).catch(() => null);
 
-    // eslint-disable-next-line react-hooks/error-boundaries
-    return (
-      <StatusDashboardClient
-        projectId={projectId}
-        data={data}
-        projects={projects}
-      />
-    );
-  } catch {
+  if (!result) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
@@ -40,4 +31,14 @@ export default async function StatusPage({
       </div>
     );
   }
+
+  const [data, projects] = result;
+
+  return (
+    <StatusDashboardClient
+      projectId={projectId}
+      data={data}
+      projects={projects}
+    />
+  );
 }
