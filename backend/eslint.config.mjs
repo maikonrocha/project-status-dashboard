@@ -56,7 +56,7 @@ export default tseslint.config(
     },
   },
   // Spec files: relax rules that conflict with common Jest mock-introspection patterns
-  // (mock.calls[n][n] returns `any`; `as any` casts for test doubles; super() in mock classes)
+  // (mock.calls[n][n] returns `any` from jest typings; super() in mock class constructors)
   {
     files: ['**/*.spec.ts'],
     rules: {
@@ -66,7 +66,6 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 );
