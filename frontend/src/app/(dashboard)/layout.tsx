@@ -1,25 +1,26 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { AuthProvider, type AuthUser } from '@/lib/auth-context';
-import { Navbar } from '../components/Navbar';
+import { DashboardShell } from '../components/DashboardShell';
 
 export default async function DashboardLayout({
-    children,
+  children,
 }: {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth_token')?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value;
 
-    if (!token) redirect('/sign-in');
+  if (!token) redirect('/sign-in');
 
-    const userCookie = cookieStore.get('auth_user')?.value;
-    const user: AuthUser | null = userCookie ? (JSON.parse(userCookie) as AuthUser) : null;
+  const userCookie = cookieStore.get('auth_user')?.value;
+  const user: AuthUser | null = userCookie
+    ? (JSON.parse(userCookie) as AuthUser)
+    : null;
 
-    return (
-        <AuthProvider initialUser={user}>
-            <Navbar />
-            {children}
-        </AuthProvider>
-    );
+  return (
+    <AuthProvider initialUser={user}>
+      <DashboardShell>{children}</DashboardShell>
+    </AuthProvider>
+  );
 }

@@ -49,3 +49,5 @@ __pycache__/
 excel_analysis_output.txt
 excel_analyzer.py
 full_excel_analysis.py
+backend/.eslintcache
+frontend/.eslintcache
