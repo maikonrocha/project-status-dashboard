@@ -12,70 +12,101 @@ const mockCookies = vi.mocked(cookies);
 const mockCookieStore = { get: vi.fn(), set: vi.fn(), delete: vi.fn() };
 
 beforeEach(() => {
-    vi.clearAllMocks();
-    mockCookies.mockResolvedValue(mockCookieStore as any);
+  vi.clearAllMocks();
+  mockCookies.mockResolvedValue(
+    mockCookieStore as unknown as Awaited<ReturnType<typeof cookies>>,
+  );
 });
 
 describe('verifyAction', () => {
-    it('returns error on API failure', async () => {
-        mockApiFetch.mockResolvedValue({ ok: false, status: 400, data: { message: 'Código expirado.' } });
-
-        const result = await verifyAction({ email: 'a@b.com', code: '000000' });
-        expect(result).toEqual({ error: 'Código expirado.' });
+  it('returns error on API failure', async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: false,
+      status: 400,
+      data: { message: 'Código expirado.' },
     });
 
-    it('uses fallback error message', async () => {
-        mockApiFetch.mockResolvedValue({ ok: false, status: 400, data: {} });
+    const result = await verifyAction({ email: 'a@b.com', code: '000000' });
+    expect(result).toEqual({ error: 'Código expirado.' });
+  });
 
-        const result = await verifyAction({ email: 'a@b.com', code: '000000' });
-        expect(result).toEqual({ error: 'Código inválido ou expirado.' });
+  it('uses fallback error message', async () => {
+    mockApiFetch.mockResolvedValue({ ok: false, status: 400, data: {} });
+
+    const result = await verifyAction({ email: 'a@b.com', code: '000000' });
+    expect(result).toEqual({ error: 'Código inválido ou expirado.' });
+  });
+
+  it('sets auth_token and auth_user cookies on success', async () => {
+    const user = { id: '1', email: 'a@b.com' };
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { accessToken: 'tok', user },
     });
 
-    it('sets auth_token and auth_user cookies on success', async () => {
-        const user = { id: '1', email: 'a@b.com' };
-        mockApiFetch.mockResolvedValue({ ok: true, status: 200, data: { accessToken: 'tok', user } });
+    await verifyAction({ email: 'a@b.com', code: '123456' });
 
-        await verifyAction({ email: 'a@b.com', code: '123456' });
+    expect(mockCookieStore.set).toHaveBeenCalledWith(
+      'auth_token',
+      'tok',
+      expect.objectContaining({ httpOnly: true }),
+    );
+    expect(mockCookieStore.set).toHaveBeenCalledWith(
+      'auth_user',
+      JSON.stringify(user),
+      expect.any(Object),
+    );
+  });
 
-        expect(mockCookieStore.set).toHaveBeenCalledWith('auth_token', 'tok', expect.objectContaining({ httpOnly: true }));
-        expect(mockCookieStore.set).toHaveBeenCalledWith('auth_user', JSON.stringify(user), expect.any(Object));
+  it('returns { success: true } on success', async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { accessToken: 'tok', user: {} },
     });
 
-    it('returns { success: true } on success', async () => {
-        mockApiFetch.mockResolvedValue({ ok: true, status: 200, data: { accessToken: 'tok', user: {} } });
-
-        const result = await verifyAction({ email: 'a@b.com', code: '123456' });
-        expect(result).toEqual({ success: true });
-    });
+    const result = await verifyAction({ email: 'a@b.com', code: '123456' });
+    expect(result).toEqual({ success: true });
+  });
 });
 
 describe('resendCodeAction', () => {
-    it('returns error on failure', async () => {
-        mockApiFetch.mockResolvedValue({ ok: false, status: 429, data: { message: 'Muitas tentativas.' } });
-
-        const result = await resendCodeAction({ email: 'a@b.com' });
-        expect(result).toEqual({ error: 'Muitas tentativas.' });
+  it('returns error on failure', async () => {
+    mockApiFetch.mockResolvedValue({
+      ok: false,
+      status: 429,
+      data: { message: 'Muitas tentativas.' },
     });
 
-    it('uses fallback error message', async () => {
-        mockApiFetch.mockResolvedValue({ ok: false, status: 500, data: {} });
+    const result = await resendCodeAction({ email: 'a@b.com' });
+    expect(result).toEqual({ error: 'Muitas tentativas.' });
+  });
 
-        const result = await resendCodeAction({ email: 'a@b.com' });
-        expect(result).toEqual({ error: 'Falha ao reenviar código.' });
-    });
+  it('uses fallback error message', async () => {
+    mockApiFetch.mockResolvedValue({ ok: false, status: 500, data: {} });
 
-    it('returns { success: true } on success', async () => {
-        mockApiFetch.mockResolvedValue({ ok: true, status: 200, data: {} });
+    const result = await resendCodeAction({ email: 'a@b.com' });
+    expect(result).toEqual({ error: 'Falha ao reenviar código.' });
+  });
 
-        const result = await resendCodeAction({ email: 'a@b.com' });
-        expect(result).toEqual({ success: true });
-    });
+  it('returns { success: true } on success', async () => {
+    mockApiFetch.mockResolvedValue({ ok: true, status: 200, data: {} });
 
-    it('posts to /auth/resend-code', async () => {
-        mockApiFetch.mockResolvedValue({ ok: true, status: 200, data: {} });
+    const result = await resendCodeAction({ email: 'a@b.com' });
+    expect(result).toEqual({ success: true });
+  });
 
-        await resendCodeAction({ email: 'test@test.com' });
+  it('posts to /auth/resend-code', async () => {
+    mockApiFetch.mockResolvedValue({ ok: true, status: 200, data: {} });
 
-        expect(mockApiFetch).toHaveBeenCalledWith('/auth/resend-code', expect.objectContaining({ method: 'POST' }));
-    });
+    await resendCodeAction({ email: 'test@test.com' });
+
+    expect(mockApiFetch).toHaveBeenCalledWith(
+      '/auth/resend-code',
+      expect.objectContaining({ method: 'POST' }),
+      undefined,
+      expect.any(Object),
+    );
+  });
 });

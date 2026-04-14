@@ -78,9 +78,7 @@ export function ProjectForm({
         response?: { data?: { message?: string } };
         message?: string;
       };
-      setError(
-        e?.response?.data?.message ?? e?.message ?? 'Something went wrong',
-      );
+      setError(e?.response?.data?.message ?? e?.message ?? 'Algo deu errado');
     } finally {
       setSubmitting(false);
     }
@@ -89,49 +87,49 @@ export function ProjectForm({
   const fields = [
     {
       name: 'name',
-      label: 'Project Name',
+      label: 'Nome do Projeto',
       placeholder: 'Next.js (Marketing)',
       required: true,
       type: 'text',
     },
     {
       name: 'epicId',
-      label: 'Epic ID',
+      label: 'ID do Epic',
       placeholder: 'MKT-3068',
       required: true,
       type: 'text',
     },
     {
       name: 'squadName',
-      label: 'Squad Name',
+      label: 'Nome do Squad',
       placeholder: 'Squad Marketing',
       required: true,
       type: 'text',
     },
     {
       name: 'teamSize',
-      label: 'Team Size',
+      label: 'Tamanho da Equipe',
       placeholder: '5',
       required: true,
       type: 'number',
     },
     {
       name: 'beginDate',
-      label: 'Begin Date',
+      label: 'Data de Início',
       placeholder: '',
       required: true,
       type: 'date',
     },
     {
       name: 'jiraBacklogFilterId',
-      label: 'Jira Backlog Filter ID',
+      label: 'ID do Filtro de Backlog Jira',
       placeholder: '10001',
       required: true,
       type: 'text',
     },
     {
       name: 'jiraThroughputFilterId',
-      label: 'Jira Throughput Filter ID',
+      label: 'ID do Filtro de Throughput Jira',
       placeholder: '10002',
       required: true,
       type: 'text',
@@ -185,7 +183,7 @@ export function ProjectForm({
                                disabled:opacity-50 disabled:cursor-not-allowed
                                shadow-lg shadow-blue-900/30"
         >
-          {submitting ? 'Saving...' : submitLabel}
+          {submitting ? 'Salvando...' : submitLabel}
         </button>
         <button
           type="button"
@@ -193,7 +191,7 @@ export function ProjectForm({
           className="px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10
                                rounded-lg text-sm font-medium text-blue-300/70 hover:text-blue-200 transition-all"
         >
-          Cancel
+          Cancelar
         </button>
       </div>
     </form>

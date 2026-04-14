@@ -12,8 +12,8 @@ jest.mock('passport-jwt', () => ({
 }));
 
 jest.mock('@nestjs/passport', () => ({
-  PassportStrategy: (Base: new (...args: unknown[]) => unknown) =>
-    class extends (Base as any) {
+  PassportStrategy: (Base: abstract new (...args: unknown[]) => object) =>
+    class extends Base {
       constructor(...args: unknown[]) {
         super(...args);
       }

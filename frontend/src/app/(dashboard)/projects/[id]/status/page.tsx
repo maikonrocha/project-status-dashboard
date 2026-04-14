@@ -19,13 +19,13 @@ export default async function StatusPage({
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 text-lg mb-4">
-            Failed to load dashboard data.
+            Falha ao carregar dados do painel.
           </p>
           <Link
             href="/"
             className="px-4 py-2 bg-blue-600/20 border border-blue-400/30 text-blue-300 rounded-lg hover:bg-blue-600/30 transition-colors inline-block"
           >
-            &larr; Back to Projects
+            &larr; Voltar para Projetos
           </Link>
         </div>
       </div>

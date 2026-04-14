@@ -33,7 +33,7 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
   const chartOption = {
     backgroundColor: 'transparent',
     title: {
-      text: 'Burndown with Baseline',
+      text: 'Burndown com Baseline',
       textStyle: { color: '#94a3b8', fontSize: 16, fontWeight: 500 },
     },
     tooltip: {
@@ -43,7 +43,7 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
       textStyle: { color: '#e2e8f0' },
     },
     legend: {
-      data: ['Actual Burndown', 'Baseline (P95)'],
+      data: ['Burndown Real', 'Baseline (P95)'],
       textStyle: { color: '#64748b' },
     },
     grid: {
@@ -63,7 +63,7 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
     },
     yAxis: {
       type: 'value',
-      name: 'Remaining Tasks',
+      name: 'Tarefas Restantes',
       nameTextStyle: { color: '#64748b' },
       axisLabel: { color: '#64748b' },
       axisLine: { lineStyle: { color: '#334155' } },
@@ -71,7 +71,7 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
     },
     series: [
       {
-        name: 'Actual Burndown',
+        name: 'Burndown Real',
         type: 'line',
         data: (data.chartData?.burndown || []).map((d) => [
           d.week,
@@ -95,7 +95,7 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
         smooth: true,
       },
       {
-        name: 'Baseline (P95)',
+        name: 'Baseline (P95)', // technical term, kept as-is
         type: 'line',
         data: (data.chartData?.baseline || []).map((d) => [d.week, d.value]),
         itemStyle: { color: '#ec4899' },
@@ -108,7 +108,7 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
   const throughputChartOption = {
     backgroundColor: 'transparent',
     title: {
-      text: 'Weekly Throughput',
+      text: 'Throughput Semanal',
       textStyle: { color: '#94a3b8', fontSize: 16, fontWeight: 500 },
     },
     tooltip: {
@@ -130,7 +130,7 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
     },
     yAxis: {
       type: 'value',
-      name: 'Tasks Completed',
+      name: 'Tarefas Concluídas',
       nameTextStyle: { color: '#64748b' },
       axisLabel: { color: '#64748b' },
       axisLine: { lineStyle: { color: '#334155' } },
@@ -184,7 +184,7 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
                   d="M15 19l-7-7 7-7"
                 />
               </svg>
-              All Projects
+              Todos os Projetos
             </button>
             <span className="text-white/10">|</span>
             <select
@@ -211,7 +211,7 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
           <div className="flex items-center gap-3 text-xs text-blue-300/40">
             <span>{data.project.squadName}</span>
             <span className="text-white/10">•</span>
-            <span>Team: {data.project.teamSize}</span>
+            <span>Equipe: {data.project.teamSize}</span>
           </div>
         </div>
       </div>
@@ -228,35 +228,35 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <KpiCard
-            label="Total Tasks"
+            label="Total de Tarefas"
             value={data.kpis.totalTasks}
             color="blue"
           />
           <KpiCard
-            label="Completed"
+            label="Concluídas"
             value={data.kpis.completed}
             subtitle={formatPercentage(data.kpis.completionPercentage)}
             color="green"
           />
           <KpiCard
-            label="Remaining"
+            label="Restantes"
             value={data.kpis.remaining}
             color="orange"
           />
           <KpiCard
-            label="Avg Throughput"
+            label="Throughput Médio"
             value={data.kpis.avgWeeklyThroughput.toFixed(1)}
-            subtitle={`This week: ${data.kpis.currentWeekThroughput}`}
+            subtitle={`Esta semana: ${data.kpis.currentWeekThroughput}`}
             color="indigo"
           />
           <KpiCard
-            label="Started"
+            label="Iniciado"
             value={formatDate(data.project.beginDate)}
             color="sky"
             small
           />
           <KpiCard
-            label="Finish Review"
+            label="Revisão de Término"
             value={formatDate(data.kpis.predictedFinish)}
             color="pink"
             small
@@ -283,9 +283,10 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
                     d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
                   />
                 </svg>
-                <p className="text-sm">No burndown data available</p>
+                <p className="text-sm">Nenhum dado de burndown disponível</p>
                 <p className="text-xs opacity-60">
-                  Check that the Jira backlog filter is configured correctly
+                  Verifique se o filtro de backlog do Jira está configurado
+                  corretamente
                 </p>
               </div>
             )}
@@ -311,9 +312,10 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
                     d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"
                   />
                 </svg>
-                <p className="text-sm">No throughput data available</p>
+                <p className="text-sm">Nenhum dado de throughput disponível</p>
                 <p className="text-xs opacity-60">
-                  Check that the Jira throughput filter is configured correctly
+                  Verifique se o filtro de throughput do Jira está configurado
+                  corretamente
                 </p>
               </div>
             )}
@@ -325,17 +327,17 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
           {/* Remaining Tasks */}
           <div className="rounded-xl border border-white/10 bg-white/5 p-5">
             <h2 className="text-lg font-semibold mb-4 text-blue-100">
-              Remaining Tasks
+              Tarefas Restantes
             </h2>
             <div className="overflow-auto max-h-96">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/10">
                     <th className="text-left p-2 text-blue-300/60 font-medium">
-                      Key
+                      Chave
                     </th>
                     <th className="text-left p-2 text-blue-300/60 font-medium">
-                      Summary
+                      Resumo
                     </th>
                     <th className="text-left p-2 text-blue-300/60 font-medium">
                       Status
@@ -368,7 +370,7 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
                         colSpan={3}
                         className="p-4 text-center text-blue-300/40 text-xs"
                       >
-                        No remaining tasks
+                        Nenhuma tarefa restante
                       </td>
                     </tr>
                   )}
@@ -380,23 +382,23 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
           {/* Weekly Throughput Table */}
           <div className="rounded-xl border border-white/10 bg-white/5 p-5">
             <h2 className="text-lg font-semibold mb-4 text-blue-100">
-              Weekly Throughput History
+              Histórico de Throughput Semanal
             </h2>
             <div className="overflow-auto max-h-96">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/10">
                     <th className="text-left p-2 text-blue-300/60 font-medium">
-                      Week
+                      Semana
                     </th>
                     <th className="text-right p-2 text-blue-300/60 font-medium">
                       Throughput
                     </th>
                     <th className="text-right p-2 text-blue-300/60 font-medium">
-                      Cumulative
+                      Cumulativo
                     </th>
                     <th className="text-right p-2 text-blue-300/60 font-medium">
-                      Remaining
+                      Restante
                     </th>
                   </tr>
                 </thead>
@@ -430,7 +432,7 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
                         colSpan={4}
                         className="p-4 text-center text-blue-300/40 text-xs"
                       >
-                        No throughput data yet
+                        Nenhum dado de throughput ainda
                       </td>
                     </tr>
                   )}

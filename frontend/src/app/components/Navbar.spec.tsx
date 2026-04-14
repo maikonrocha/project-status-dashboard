@@ -1,19 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AuthProvider } from '@/lib/auth-context';
 import type { AuthUser } from '@/lib/auth-context';
 
 vi.mock('next/navigation', () => ({
-    usePathname: vi.fn().mockReturnValue('/'),
-    useRouter: vi.fn().mockReturnValue({ push: vi.fn() }),
+  usePathname: vi.fn().mockReturnValue('/'),
+  useRouter: vi.fn().mockReturnValue({ push: vi.fn() }),
 }));
 
 vi.mock('next/link', () => ({
-    default: ({ href, children, ...props }: any) => <a href={href} {...props}>{children}</a>,
+  default: ({
+    href,
+    children,
+    ...props
+  }: React.ComponentPropsWithoutRef<'a'>) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock('@/lib/actions/auth', () => ({
-    logoutAction: vi.fn().mockResolvedValue(undefined),
+  logoutAction: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -24,83 +33,101 @@ const mockUsePathname = vi.mocked(usePathname);
 const mockUseRouter = vi.mocked(useRouter);
 const mockLogoutAction = vi.mocked(logoutAction);
 
-const ownerUser: AuthUser = { id: '1', email: 'o@t.com', name: 'Alice', role: 'OWNER', companyId: 'c1', companyName: 'Acme' };
-const regularUser: AuthUser = { id: '2', email: 'u@t.com', name: 'Bob', role: 'USER', companyId: 'c1', companyName: 'Acme' };
+const ownerUser: AuthUser = {
+  id: '1',
+  email: 'o@t.com',
+  name: 'Alice',
+  role: 'OWNER',
+  companyId: 'c1',
+  companyName: 'Acme',
+};
+const regularUser: AuthUser = {
+  id: '2',
+  email: 'u@t.com',
+  name: 'Bob',
+  role: 'USER',
+  companyId: 'c1',
+  companyName: 'Acme',
+};
 
 function renderNavbar(user: AuthUser | null, pathname = '/') {
-    mockUsePathname.mockReturnValue(pathname);
-    return render(
-        <AuthProvider initialUser={user}>
-            <Navbar />
-        </AuthProvider>,
-    );
+  mockUsePathname.mockReturnValue(pathname);
+  return render(
+    <AuthProvider initialUser={user}>
+      <Navbar />
+    </AuthProvider>,
+  );
 }
 
 beforeEach(() => {
-    vi.clearAllMocks();
-    mockUseRouter.mockReturnValue({ push: vi.fn() } as any);
+  vi.clearAllMocks();
+  mockUseRouter.mockReturnValue({ push: vi.fn() } as unknown as ReturnType<
+    typeof useRouter
+  >);
 });
 
 describe('Navbar', () => {
-    it('renders Dashboard and Projects links for all users', () => {
-        renderNavbar(regularUser);
-        expect(screen.getByText('Dashboard')).toBeInTheDocument();
-        expect(screen.getByText('Projects')).toBeInTheDocument();
-    });
+  it('renders Dashboard and Projects links for all users', () => {
+    renderNavbar(regularUser);
+    expect(screen.getByText('Painel')).toBeInTheDocument();
+    expect(screen.getByText('Projetos')).toBeInTheDocument();
+  });
 
-    it('shows Team link for OWNER', () => {
-        renderNavbar(ownerUser);
-        expect(screen.getByText('Team')).toBeInTheDocument();
-    });
+  it('shows Team link for OWNER', () => {
+    renderNavbar(ownerUser);
+    expect(screen.getByText('Equipe')).toBeInTheDocument();
+  });
 
-    it('hides Team link for USER', () => {
-        renderNavbar(regularUser);
-        expect(screen.queryByText('Team')).not.toBeInTheDocument();
-    });
+  it('hides Team link for USER', () => {
+    renderNavbar(regularUser);
+    expect(screen.queryByText('Equipe')).not.toBeInTheDocument();
+  });
 
-    it('displays the logged-in user name', () => {
-        renderNavbar(ownerUser);
-        expect(screen.getByText('Alice')).toBeInTheDocument();
-    });
+  it('displays the logged-in user name', () => {
+    renderNavbar(ownerUser);
+    expect(screen.getByText('Alice')).toBeInTheDocument();
+  });
 
-    it('displays Owner role badge for OWNER', () => {
-        renderNavbar(ownerUser);
-        expect(screen.getByText(/Owner/)).toBeInTheDocument();
-    });
+  it('displays Owner role badge for OWNER', () => {
+    renderNavbar(ownerUser);
+    expect(screen.getByText(/Proprietário/)).toBeInTheDocument();
+  });
 
-    it('displays Member role badge for USER', () => {
-        renderNavbar(regularUser);
-        expect(screen.getByText('Member')).toBeInTheDocument();
-    });
+  it('displays Member role badge for USER', () => {
+    renderNavbar(regularUser);
+    expect(screen.getByText('Membro')).toBeInTheDocument();
+  });
 
-    it('does not show user section when user is null', () => {
-        renderNavbar(null);
-        expect(screen.queryByTitle('Sign out')).not.toBeInTheDocument();
-    });
+  it('does not show user section when user is null', () => {
+    renderNavbar(null);
+    expect(screen.queryByTitle('Sair')).not.toBeInTheDocument();
+  });
 
-    it('calls logoutAction and redirects to /sign-in on logout click', async () => {
-        const mockPush = vi.fn();
-        mockUseRouter.mockReturnValue({ push: mockPush } as any);
+  it('calls logoutAction and redirects to /sign-in on logout click', async () => {
+    const mockPush = vi.fn();
+    mockUseRouter.mockReturnValue({ push: mockPush } as unknown as ReturnType<
+      typeof useRouter
+    >);
 
-        renderNavbar(ownerUser);
+    renderNavbar(ownerUser);
 
-        const logoutBtn = screen.getByTitle('Sign out');
-        fireEvent.click(logoutBtn);
+    const logoutBtn = screen.getByTitle('Sair');
+    fireEvent.click(logoutBtn);
 
-        // Allow async handler to complete
-        await vi.waitFor(() => expect(mockLogoutAction).toHaveBeenCalledOnce());
-        await vi.waitFor(() => expect(mockPush).toHaveBeenCalledWith('/sign-in'));
-    });
+    // Allow async handler to complete
+    await vi.waitFor(() => expect(mockLogoutAction).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(mockPush).toHaveBeenCalledWith('/sign-in'));
+  });
 
-    it('marks the active link based on current pathname', () => {
-        renderNavbar(ownerUser, '/projects');
-        const projectsLink = screen.getByText('Projects').closest('a');
-        expect(projectsLink?.className).toContain('bg-blue-500/20');
-    });
+  it('marks the active link based on current pathname', () => {
+    renderNavbar(ownerUser, '/projects');
+    const projectsLink = screen.getByText('Projetos').closest('a');
+    expect(projectsLink?.className).toContain('bg-blue-500/20');
+  });
 
-    it('does not mark Dashboard as active when on /projects', () => {
-        renderNavbar(ownerUser, '/projects');
-        const dashboardLink = screen.getByText('Dashboard').closest('a');
-        expect(dashboardLink?.className).not.toContain('bg-blue-500/20');
-    });
+  it('does not mark Dashboard as active when on /projects', () => {
+    renderNavbar(ownerUser, '/projects');
+    const dashboardLink = screen.getByText('Painel').closest('a');
+    expect(dashboardLink?.className).not.toContain('bg-blue-500/20');
+  });
 });

@@ -240,6 +240,17 @@ describe('AuthService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
+    it('includes isVerified and isActive in the returned user object', async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce(OWNER_USER);
+      mockedBcrypt.compare.mockResolvedValueOnce(true as never);
+
+      const result = await service.signIn('owner@acme.com', 'pass123');
+      const user = (result as { user: Record<string, unknown> }).user;
+
+      expect(user.isVerified).toBe(OWNER_USER.isVerified);
+      expect(user.isActive).toBe(OWNER_USER.isActive);
+    });
+
     it('returns requiresVerification and resends code when user is not verified', async () => {
       (prisma.user.findUnique as jest.Mock).mockResolvedValueOnce({
         ...OWNER_USER,
@@ -287,6 +298,20 @@ describe('AuthService', () => {
         expect.objectContaining({ data: { isVerified: true } }),
       );
       expect(result).toHaveProperty('accessToken', 'mock-jwt-token');
+    });
+
+    it('includes isVerified and isActive in the returned user object', async () => {
+      (prisma.verificationCode.findFirst as jest.Mock).mockResolvedValueOnce(
+        VALID_CODE_RECORD,
+      );
+      (prisma.verificationCode.update as jest.Mock).mockResolvedValueOnce({});
+      (prisma.user.update as jest.Mock).mockResolvedValueOnce(OWNER_USER);
+
+      const result = await service.verifyCode('owner@acme.com', '123456');
+      const user = (result as { user: Record<string, unknown> }).user;
+
+      expect(user.isVerified).toBe(OWNER_USER.isVerified);
+      expect(user.isActive).toBe(OWNER_USER.isActive);
     });
 
     it('throws BadRequestException when code is invalid or expired', async () => {
