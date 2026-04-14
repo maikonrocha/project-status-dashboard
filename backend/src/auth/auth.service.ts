@@ -128,6 +128,8 @@ export class AuthService {
         role: user.role,
         companyId: user.companyId,
         companyName: user.company.name,
+        isVerified: user.isVerified,
+        isActive: user.isActive,
       },
     };
   }
@@ -172,6 +174,8 @@ export class AuthService {
         role: user.role,
         companyId: user.companyId,
         companyName: user.company.name,
+        isVerified: user.isVerified,
+        isActive: user.isActive,
       },
     };
   }
