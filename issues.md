@@ -1,0 +1,2 @@
+- The baseline dates in "Burndown with Baseline" chart is setted with GMT-3, and that`s wrong, for example 2026-02-12 21:00:00 the correct value is 2026-02-13.
+- Format all dates to 2025/02/12 00:00:00.

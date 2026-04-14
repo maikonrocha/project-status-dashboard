@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:developer.atlassian.com)"
+      "WebFetch(domain:developer.atlassian.com)",
+      "Bash(find /c/github/services/project-status-dashboard/backend/src -name *.spec.ts -o -name *.test.ts)",
+      "Bash(cmd /c \"wmic process where processid=35016 delete\")",
+      "Bash(cmd /c \"tasklist /FI \"\"PID eq 35016\"\"\")",
+      "Bash(cmd /c tasklist /FI \"PID eq 35016\")",
+      "Bash(cmd /c \"taskkill /PID 35016 /F /V\")",
+      "Bash(powershell -Command \"Get-Process -Id 35016 | Stop-Process -Force\")"
     ]
   }
 }
