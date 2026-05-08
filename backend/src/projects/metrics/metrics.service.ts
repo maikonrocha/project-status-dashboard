@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JiraIssueData } from '../../jira/jira-client.service';
-import { addWeeks, startOfWeek, isBefore } from 'date-fns';
+import { addWeeks, addDays, startOfWeek, isBefore } from 'date-fns';
 
 export interface WeeklyMetricRow {
   weekStart: Date;
@@ -137,5 +137,14 @@ export class MetricsService {
    */
   getRemainingCount(issues: JiraIssueData[]): number {
     return issues.filter((i) => !i.resolutionDate).length;
+  }
+
+  /**
+   * Return the next Saturday strictly after the given date.
+   * If the date is already a Saturday, return the following Saturday (7 days later).
+   */
+  getNextSaturdayAfter(date: Date): Date {
+    const day = date.getDay();
+    return addDays(date, day === 6 ? 7 : 6 - day);
   }
 }
