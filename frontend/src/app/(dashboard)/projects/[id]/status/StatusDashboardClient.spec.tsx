@@ -72,8 +72,20 @@ const makeDashboard = (
   },
   tables: {
     remainingTasks: [
-      { key: 'EPIC-10', summary: 'Fix login bug', status: 'Em Andamento' },
-      { key: 'EPIC-11', summary: 'Add dark mode', status: 'In Progress' },
+      {
+        key: 'EPIC-10',
+        summary: 'Fix login bug',
+        status: 'Em Andamento',
+        assignee: null,
+        createdDate: null,
+      },
+      {
+        key: 'EPIC-11',
+        summary: 'Add dark mode',
+        status: 'In Progress',
+        assignee: null,
+        createdDate: null,
+      },
     ],
     recentCompleted: [],
     weeklyThroughput: [
