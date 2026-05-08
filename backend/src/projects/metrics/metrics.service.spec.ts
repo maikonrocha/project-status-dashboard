@@ -344,6 +344,28 @@ describe('MetricsService', () => {
     });
   });
 
+  // ─── getNextSaturdayAfter ─────────────────────────────────────────────────
+
+  describe('getNextSaturdayAfter', () => {
+    it('returns the next Saturday when date is a non-Saturday (Friday May 15 2026 → May 16)', () => {
+      const friday = new Date(2026, 4, 15); // May 15, 2026 = Friday
+      const result = service.getNextSaturdayAfter(friday);
+      expect(result.getDay()).toBe(6);
+      expect(result.getFullYear()).toBe(2026);
+      expect(result.getMonth()).toBe(4);
+      expect(result.getDate()).toBe(16);
+    });
+
+    it('returns 7 days ahead when date is already a Saturday (May 9 → May 16)', () => {
+      const saturday = new Date(2026, 4, 9); // May 9, 2026 = Saturday
+      const result = service.getNextSaturdayAfter(saturday);
+      expect(result.getDay()).toBe(6);
+      expect(result.getFullYear()).toBe(2026);
+      expect(result.getMonth()).toBe(4);
+      expect(result.getDate()).toBe(16);
+    });
+  });
+
   // ─── getRemainingCount ────────────────────────────────────────────────────
 
   describe('getRemainingCount', () => {

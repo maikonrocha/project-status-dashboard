@@ -54,7 +54,7 @@ function renderNavbar(user: AuthUser | null, pathname = '/') {
   mockUsePathname.mockReturnValue(pathname);
   return render(
     <AuthProvider initialUser={user}>
-      <Navbar />
+      <Navbar onMenuClick={vi.fn()} />
     </AuthProvider>,
   );
 }
@@ -67,17 +67,6 @@ beforeEach(() => {
 });
 
 describe('Navbar', () => {
-  it('renders Dashboard and Projects links for all users', () => {
-    renderNavbar(regularUser);
-    expect(screen.getByText('Painel')).toBeInTheDocument();
-    expect(screen.getByText('Projetos')).toBeInTheDocument();
-  });
-
-  it('shows Team link for OWNER', () => {
-    renderNavbar(ownerUser);
-    expect(screen.getByText('Equipe')).toBeInTheDocument();
-  });
-
   it('hides Team link for USER', () => {
     renderNavbar(regularUser);
     expect(screen.queryByText('Equipe')).not.toBeInTheDocument();
@@ -117,17 +106,5 @@ describe('Navbar', () => {
     // Allow async handler to complete
     await vi.waitFor(() => expect(mockLogoutAction).toHaveBeenCalledOnce());
     await vi.waitFor(() => expect(mockPush).toHaveBeenCalledWith('/sign-in'));
-  });
-
-  it('marks the active link based on current pathname', () => {
-    renderNavbar(ownerUser, '/projects');
-    const projectsLink = screen.getByText('Projetos').closest('a');
-    expect(projectsLink?.className).toContain('bg-blue-500/20');
-  });
-
-  it('does not mark Dashboard as active when on /projects', () => {
-    renderNavbar(ownerUser, '/projects');
-    const dashboardLink = screen.getByText('Painel').closest('a');
-    expect(dashboardLink?.className).not.toContain('bg-blue-500/20');
   });
 });

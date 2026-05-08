@@ -12,6 +12,9 @@ vi.mock('echarts-for-react', () => ({
     <div
       data-testid="echarts"
       data-title={(option?.title as Record<string, unknown>)?.text as string}
+      data-xaxis-max={String(
+        (option?.xAxis as Record<string, unknown>)?.max ?? '',
+      )}
     />
   ),
 }));
@@ -69,8 +72,20 @@ const makeDashboard = (
   },
   tables: {
     remainingTasks: [
-      { key: 'EPIC-10', summary: 'Fix login bug', status: 'Em Andamento' },
-      { key: 'EPIC-11', summary: 'Add dark mode', status: 'In Progress' },
+      {
+        key: 'EPIC-10',
+        summary: 'Fix login bug',
+        status: 'Em Andamento',
+        assignee: null,
+        createdDate: null,
+      },
+      {
+        key: 'EPIC-11',
+        summary: 'Add dark mode',
+        status: 'In Progress',
+        assignee: null,
+        createdDate: null,
+      },
     ],
     recentCompleted: [],
     weeklyThroughput: [
@@ -376,5 +391,81 @@ describe('StatusDashboardClient', () => {
     expect(screen.getByText('Revisão de Término')).toBeInTheDocument();
     // formatDate(null) returns '-'
     expect(screen.getAllByText('-').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('chartMax snaps to next Saturday when predictedFinish is a non-Saturday', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 1)); // 2026-01-01, before predictedFinish
+    // Use local midnight to avoid UTC timezone shift (CLAUDE.md rule)
+    // 2026-06-03 is a Wednesday locally
+    const data = makeDashboard({
+      kpis: {
+        ...makeDashboard().kpis,
+        predictedFinish: new Date(2026, 5, 3).toISOString(),
+      },
+    });
+    render(
+      <StatusDashboardClient projectId="1" data={data} projects={projects} />,
+    );
+    const burndownChart = screen
+      .getAllByTestId('echarts')
+      .find((c) => c.getAttribute('data-title') === 'Burndown com Baseline')!;
+    const maxTs = Number(burndownChart.getAttribute('data-xaxis-max'));
+    const maxDate = new Date(maxTs);
+    // Next Saturday after Wednesday 2026-06-03 is 2026-06-06
+    expect(maxDate.getDay()).toBe(6);
+    expect(maxDate.getFullYear()).toBe(2026);
+    expect(maxDate.getMonth()).toBe(5); // June (0-indexed)
+    expect(maxDate.getDate()).toBe(6);
+    vi.useRealTimers();
+  });
+
+  it('chartMax uses the user-reported bug case: predictedFinish May 15 (Friday) → May 16 (Saturday)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 1));
+    const data = makeDashboard({
+      kpis: {
+        ...makeDashboard().kpis,
+        predictedFinish: new Date(2026, 4, 15).toISOString(),
+      },
+    });
+    render(
+      <StatusDashboardClient projectId="1" data={data} projects={projects} />,
+    );
+    const chart = screen
+      .getAllByTestId('echarts')
+      .find((c) => c.getAttribute('data-title') === 'Burndown com Baseline')!;
+    const maxDate = new Date(Number(chart.getAttribute('data-xaxis-max')));
+    expect(maxDate.getDay()).toBe(6);
+    expect(maxDate.getMonth()).toBe(4);
+    expect(maxDate.getDate()).toBe(16);
+    vi.useRealTimers();
+  });
+
+  it('chartMax advances to the NEXT Saturday when predictedFinish is already a Saturday', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 1)); // 2026-01-01, before predictedFinish
+    // Use local midnight to avoid UTC timezone shift (CLAUDE.md rule)
+    // 2026-06-06 is a Saturday locally
+    const data = makeDashboard({
+      kpis: {
+        ...makeDashboard().kpis,
+        predictedFinish: new Date(2026, 5, 6).toISOString(),
+      },
+    });
+    render(
+      <StatusDashboardClient projectId="1" data={data} projects={projects} />,
+    );
+    const burndownChart = screen
+      .getAllByTestId('echarts')
+      .find((c) => c.getAttribute('data-title') === 'Burndown com Baseline')!;
+    const maxTs = Number(burndownChart.getAttribute('data-xaxis-max'));
+    const maxDate = new Date(maxTs);
+    // Must be the FOLLOWING Saturday: 2026-06-13
+    expect(maxDate.getDay()).toBe(6);
+    expect(maxDate.getFullYear()).toBe(2026);
+    expect(maxDate.getMonth()).toBe(5); // June (0-indexed)
+    expect(maxDate.getDate()).toBe(13);
+    vi.useRealTimers();
   });
 });

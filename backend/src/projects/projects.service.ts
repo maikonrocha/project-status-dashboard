@@ -165,10 +165,13 @@ export class ProjectsService {
 
     let baselineSeries: ReturnType<BaselineService['computeBaseline']> = [];
     if (simulationResults) {
+      const baselineEnd = this.metricsService.getNextSaturdayAfter(
+        simulationResults.p95Date,
+      );
       baselineSeries = this.baselineService.computeBaseline(
         totalScope,
         project.beginDate,
-        simulationResults.p95Date,
+        baselineEnd,
       );
     }
 
@@ -201,6 +204,13 @@ export class ProjectsService {
           remaining: m.remainingCount,
         });
       }
+    }
+
+    // Extend burndown to today so the line reflects tasks completed this week
+    const now = new Date();
+    const lastPoint = burndown.at(-1);
+    if (!lastPoint || now.getTime() > lastPoint.week.getTime()) {
+      burndown.push({ week: now, remaining: remainingTasks });
     }
 
     const baseline = baselineSeries.map((b) => ({

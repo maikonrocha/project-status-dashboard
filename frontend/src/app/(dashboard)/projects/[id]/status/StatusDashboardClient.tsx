@@ -14,19 +14,27 @@ interface Props {
 export function StatusDashboardClient({ projectId, data, projects }: Props) {
   const router = useRouter();
 
+  // Parse date as local midnight to avoid UTC timezone shift in ECharts
+  const toLocalTs = (d: string | Date): number => {
+    const s = typeof d === 'string' ? d : d.toISOString();
+    const [y, mo, day] = s.substring(0, 10).split('-').map(Number);
+    return new Date(y, mo - 1, day).getTime();
+  };
+
   // Calculate the chart X-axis boundaries
-  const chartMin = new Date(data.project.beginDate).getTime();
+  const chartMin = toLocalTs(data.project.beginDate);
   let chartMax: number | undefined = undefined;
 
   if (data.kpis.predictedFinish) {
-    const p95Date = new Date(data.kpis.predictedFinish);
+    // Parse as local midnight to avoid UTC timezone shift (same as toLocalTs)
+    const p95Date = new Date(toLocalTs(data.kpis.predictedFinish));
     const day = p95Date.getDay();
-    const daysUntilFriday = (5 - day + 7) % 7;
-    const nextFri = new Date(p95Date);
-    nextFri.setDate(p95Date.getDate() + daysUntilFriday);
-    nextFri.setHours(23, 59, 59, 999);
+    const daysUntilNextSat = day === 6 ? 7 : 6 - day;
+    const nextSat = new Date(p95Date);
+    nextSat.setDate(p95Date.getDate() + daysUntilNextSat);
+    nextSat.setHours(23, 59, 59, 999);
     // eslint-disable-next-line react-hooks/purity
-    chartMax = Math.max(nextFri.getTime(), Date.now());
+    chartMax = Math.max(nextSat.getTime(), Date.now());
   }
 
   // ECharts burndown configuration (dark theme)
@@ -74,7 +82,7 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
         name: 'Burndown Real',
         type: 'line',
         data: (data.chartData?.burndown || []).map((d) => [
-          d.week,
+          toLocalTs(d.week),
           d.remaining,
         ]),
         itemStyle: { color: '#3b82f6' },
@@ -97,7 +105,10 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
       {
         name: 'Baseline (P95)', // technical term, kept as-is
         type: 'line',
-        data: (data.chartData?.baseline || []).map((d) => [d.week, d.value]),
+        data: (data.chartData?.baseline || []).map((d) => [
+          toLocalTs(d.week),
+          d.value,
+        ]),
         itemStyle: { color: '#ec4899' },
         lineStyle: { width: 2, type: 'dashed' },
       },
@@ -140,7 +151,7 @@ export function StatusDashboardClient({ projectId, data, projects }: Props) {
       {
         type: 'bar',
         data: (data.tables?.weeklyThroughput || []).map((w) => [
-          w.weekEnding,
+          toLocalTs(w.weekEnding),
           w.throughput,
         ]),
         itemStyle: {

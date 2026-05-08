@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { completeSignUpAction } from './actions';
 
@@ -12,16 +12,12 @@ function CompleteSignUpForm() {
   const [email] = useState(emailParam);
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(
+    emailParam
+      ? ''
+      : 'Link de convite inválido. Solicite ao administrador que reenvie o convite.',
+  );
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!emailParam) {
-      setError(
-        'Link de convite inválido. Solicite ao administrador que reenvie o convite.',
-      );
-    }
-  }, [emailParam]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
