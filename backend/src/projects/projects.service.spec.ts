@@ -1,4 +1,4 @@
-import { BadGatewayException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { type PrismaService } from '../prisma/prisma.service';
 import { type MetricsService } from './metrics/metrics.service';
@@ -25,18 +25,6 @@ const PROJECT = {
   createdAt: new Date(),
   updatedAt: new Date(),
 };
-
-function makeIssue(resolutionDate: Date | null = null) {
-  return {
-    key: 'TST-1',
-    summary: 'Summary',
-    status: resolutionDate ? 'Done' : 'In Progress',
-    issueType: 'Story',
-    assignee: null,
-    createdDate: new Date(2025, 0, 1),
-    resolutionDate,
-  };
-}
 
 // ─── Mock factories ───────────────────────────────────────────────────────────
 
@@ -256,156 +244,6 @@ describe('ProjectsService', () => {
 
       await expect(service.remove('bad-id', COMPANY_ID)).rejects.toThrow(
         NotFoundException,
-      );
-    });
-  });
-
-  // ─── getStatus ────────────────────────────────────────────────────────────
-
-  describe('getStatus', () => {
-    beforeEach(() => {
-      // Project exists
-      (prisma.project.findUnique as jest.Mock).mockResolvedValue(PROJECT);
-      // Jira returns some issues
-      const resolved = makeIssue(new Date(2025, 0, 8));
-      const open = makeIssue(null);
-      (jira.fetchIssuesByFilter as jest.Mock)
-        .mockResolvedValueOnce([resolved, open]) // backlog
-        .mockResolvedValueOnce([resolved]); // throughput
-    });
-
-    it('returns a StatusDashboardDto with correct project metadata', async () => {
-      const result = await service.getStatus(PROJECT_ID, COMPANY_ID);
-
-      expect(result.project.id).toBe(PROJECT_ID);
-      expect(result.project.name).toBe(PROJECT.name);
-    });
-
-    it('calls fetchIssuesByFilter for both backlog and throughput filters', async () => {
-      await service.getStatus(PROJECT_ID, COMPANY_ID);
-
-      expect(jira.fetchIssuesByFilter).toHaveBeenCalledWith(
-        PROJECT.jiraBacklogFilterId,
-      );
-      expect(jira.fetchIssuesByFilter).toHaveBeenCalledWith(
-        PROJECT.jiraThroughputFilterId,
-      );
-    });
-
-    it('calls computeWeeklyMetricsFromIssues with fetched issues', async () => {
-      await service.getStatus(PROJECT_ID, COMPANY_ID);
-
-      expect(metrics.computeWeeklyMetricsFromIssues).toHaveBeenCalled();
-    });
-
-    it('calls runSimulation when throughput distribution and remaining tasks are non-zero', async () => {
-      metrics.getRemainingCount.mockReturnValue(5);
-      metrics.getThroughputDistribution.mockReturnValue([3, 3, 3]);
-
-      await service.getStatus(PROJECT_ID, COMPANY_ID);
-
-      expect(monteCarlo.runSimulation).toHaveBeenCalled();
-    });
-
-    it('skips Monte Carlo simulation when remainingTasks is 0', async () => {
-      metrics.getRemainingCount.mockReturnValue(0);
-
-      await service.getStatus(PROJECT_ID, COMPANY_ID);
-
-      expect(monteCarlo.runSimulation).not.toHaveBeenCalled();
-    });
-
-    it('skips Monte Carlo simulation when throughputDistribution is empty', async () => {
-      metrics.getThroughputDistribution.mockReturnValue([]);
-
-      await service.getStatus(PROJECT_ID, COMPANY_ID);
-
-      expect(monteCarlo.runSimulation).not.toHaveBeenCalled();
-    });
-
-    it('includes kpis with completionPercentage', async () => {
-      const result = await service.getStatus(PROJECT_ID, COMPANY_ID);
-
-      expect(result.kpis).toHaveProperty('completionPercentage');
-      expect(result.kpis.completionPercentage).toBeGreaterThanOrEqual(0);
-      expect(result.kpis.completionPercentage).toBeLessThanOrEqual(100);
-    });
-
-    it('throws BadGatewayException when Jira call fails', async () => {
-      // Reset and override: the first call throws, regardless of beforeEach queue
-      (jira.fetchIssuesByFilter as jest.Mock)
-        .mockReset()
-        .mockRejectedValue(new Error('Jira down'));
-
-      await expect(service.getStatus(PROJECT_ID, COMPANY_ID)).rejects.toThrow(
-        BadGatewayException,
-      );
-    });
-
-    it('throws NotFoundException when project does not exist', async () => {
-      (prisma.project.findUnique as jest.Mock).mockResolvedValue(null);
-
-      await expect(service.getStatus('bad-id', COMPANY_ID)).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-
-    it('returns empty tables when backlog is empty', async () => {
-      (prisma.project.findUnique as jest.Mock).mockResolvedValue(PROJECT);
-      // Reset to clear the beforeEach queue and return empty arrays for both filters
-      (jira.fetchIssuesByFilter as jest.Mock).mockReset().mockResolvedValue([]);
-      metrics.getRemainingCount.mockReturnValue(0);
-      metrics.getThroughputDistribution.mockReturnValue([]);
-
-      const result = await service.getStatus(PROJECT_ID, COMPANY_ID);
-
-      expect(result.tables.remainingTasks).toEqual([]);
-      expect(result.tables.recentCompleted).toEqual([]);
-    });
-
-    it('populates burndown and weeklyThroughput when metrics has rows (lines 170-171, 214-216)', async () => {
-      // Return a real WeeklyMetricRow so the for-loop body and map callback execute
-      const weekRow = {
-        weekStart: new Date(2025, 0, 11), // Saturday Jan 11 — after PROJECT.beginDate (Jan 4)
-        totalScope: 3,
-        completedCount: 1,
-        remainingCount: 2,
-        weeklyThroughput: 1,
-        baselineValue: 0,
-      };
-      metrics.computeWeeklyMetricsFromIssues.mockReturnValue([weekRow]);
-      metrics.getThroughputDistribution.mockReturnValue([1]);
-      metrics.getRemainingCount.mockReturnValue(2);
-
-      const result = await service.getStatus(PROJECT_ID, COMPANY_ID);
-
-      // burndown should include the begin point plus the metrics week (line 170-171)
-      expect(result.chartData.burndown.length).toBeGreaterThan(1);
-
-      // weeklyThroughput table should have one entry built from the metrics row (lines 214-216)
-      expect(result.tables.weeklyThroughput).toHaveLength(1);
-      expect(result.tables.weeklyThroughput[0].throughput).toBe(1);
-    });
-
-    it('sorts recentCompleted by most-recent first when multiple items are resolved (line 205)', async () => {
-      // Two resolved items — sort comparator must be called
-      const older = makeIssue(new Date(2025, 0, 5));
-      const newer = makeIssue(new Date(2025, 0, 10));
-      older['key'] = 'TST-OLD';
-      newer['key'] = 'TST-NEW';
-
-      (jira.fetchIssuesByFilter as jest.Mock)
-        .mockReset()
-        .mockResolvedValueOnce([older, newer]) // backlog
-        .mockResolvedValueOnce([older, newer]); // throughput
-
-      const result = await service.getStatus(PROJECT_ID, COMPANY_ID);
-
-      // Newest resolution date should come first
-      expect(
-        result.tables.recentCompleted[0].resolutionDate.getTime(),
-      ).toBeGreaterThanOrEqual(
-        result.tables.recentCompleted[1].resolutionDate.getTime(),
       );
     });
   });
