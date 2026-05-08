@@ -59,6 +59,7 @@ function makeMetrics(): jest.Mocked<MetricsService> {
     getRemainingCount: jest.fn().mockReturnValue(5),
     getAverageWeeklyThroughput: jest.fn().mockReturnValue(3),
     getCurrentWeekThroughput: jest.fn().mockReturnValue(3),
+    getNextSaturdayAfter: jest.fn((d: Date) => d),
   } as unknown as jest.Mocked<MetricsService>;
 }
 
